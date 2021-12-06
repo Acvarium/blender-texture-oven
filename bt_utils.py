@@ -539,12 +539,14 @@ def SetRenderSettings(jobPass,jobSettings):
 
     # Configura o Device
     bpy.context.scene.cycles.device = jobSettings.render_device
+    # Seta o Denoise
+    bpy.context.scene.cycles.use_denoising = jobPass.use_denoising
 
     # Configura o Render Pass
     bpy.context.scene.render.bake.use_pass_diffuse = jobPass.use_pass_diffuse
     bpy.context.scene.render.bake.use_pass_glossy = jobPass.use_pass_glossy
     bpy.context.scene.render.bake.use_pass_transmission = jobPass.use_pass_transmission
-    bpy.context.scene.render.bake.use_pass_ambient_occlusion = jobPass.use_pass_ambient_occlusion
+    #bpy.context.scene.render.bake.use_pass_ambient_occlusion = jobPass.use_pass_ambient_occlusion
     bpy.context.scene.render.bake.use_pass_emit = jobPass.use_pass_emit
 
     # Cycles sub passes properties
@@ -559,7 +561,7 @@ def CreateIndividualEveeScene(activeJob):
     bpy.ops.object.select_all(action="DESELECT")
 
     # Remove Collection
-    tempCollection = False;
+    tempCollection = False
     for col in bpy.context.scene.collection.children:
         if(col.name == "BAKETOOL_" + activeJob.name):
             for obj in col.objects:

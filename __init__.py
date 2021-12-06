@@ -21,8 +21,8 @@
 bl_info = {
     "name": "BakeTool",
     "author": "Cogumelo Softworks",
-    "version": (2,4,3),
-    "blender": (2,83,0),
+    "version": (2,5,1),
+    "blender": (3,0,0),
     "location": "3DView > Render> BakeTool",
     "description": "Bake Solution for Cycles",
     "wiki_url":  "http://cgcookiemarkets.com/blender/all-products/baketool/?view=docs",
@@ -118,7 +118,7 @@ class BakeTool_Settings(bpy.types.PropertyGroup):
 
     mode : bpy.props.EnumProperty(name = "Bake Mode",  description = "Atlas = Bake all Objects to one texture group, Individual = Bake all objects as individual", default= "INDI", items = mode_enum)
 
-    path : bpy.props.StringProperty(default=bpy.utils.user_resource('SCRIPTS', "addons") + "/baketool/results/",subtype="DIR_PATH", description = "Save images in this location")
+    path : bpy.props.StringProperty(default=bpy.utils.user_resource('SCRIPTS', path = "addons") + "/baketool/results/",subtype="DIR_PATH", description = "Save images in this location")
     #keep : bpy.props.BoolProperty(default=True, description = "Save images inside Blender too")
     target : bpy.props.StringProperty(description = "if Target is filled it will bake all passes and objects for the target selected")
     target_uv : bpy.props.StringProperty()
@@ -212,13 +212,16 @@ class BakeTool_BakePass(bpy.types.PropertyGroup):
     use_pass_diffuse : bpy.props.BoolProperty(default = True)
     use_pass_glossy : bpy.props.BoolProperty(default = True)
     use_pass_transmission : bpy.props.BoolProperty(default = True)
-    use_pass_ambient_occlusion : bpy.props.BoolProperty(default = True)
+    #use_pass_ambient_occlusion : bpy.props.BoolProperty(default = True)
     use_pass_emit : bpy.props.BoolProperty(default = True)
 
     # Cycles sub passes properties
     use_pass_color : bpy.props.BoolProperty(default = True)
     use_pass_direct : bpy.props.BoolProperty(default = True)
     use_pass_indirect : bpy.props.BoolProperty(default = True)
+
+    # Cycles Denoise
+    use_denoising : bpy.props.BoolProperty(default = True)
 
     # Normal properties
     normal_space_cycles_enum = [("TANGENT","Tangent","",1),("OBJECT","Object","",2)]
@@ -282,7 +285,7 @@ class BakeTool_ReportData(bpy.types.PropertyGroup):
 class BAKETOOL_UL_Joblist(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         row = layout.row(align = False)
-        row.prop(item,"enabled", text = "");
+        row.prop(item,"enabled", text = "")
         row.prop(item,"name", text = "", emboss = False, icon = "RENDERLAYERS")
 
 
@@ -540,9 +543,9 @@ class BakeTool_RemoveJob(bpy.types.Operator):
 def AddPass():
     Job = bpy.context.scene.BakeTool_Jobs
     ActiveJob = Job.Jobs[Job.index]
-    Bake_Pass = ActiveJob.job_pass.Pass.add();
+    Bake_Pass = ActiveJob.job_pass.Pass.add()
     Bake_Pass.id = random.randint(0, 9999)
-    Bake_Pass.enabled = True;
+    Bake_Pass.enabled = True
     Bake_Pass.name = "Pass " + str(len(ActiveJob.job_pass.Pass))
 
 def RemovePass(context,id):
@@ -748,6 +751,7 @@ class BAKETOOL_PT_PassList(bpy.types.Panel):
         row = layout.row()
 
         row = layout.column(align = True)
+        row.prop(Pass,"use_denoising",text="Use Denoise")
         row.prop(Pass,"enabled",text="Enabled")
         row.prop(Pass,"size",text="Resolution")
         row.prop(Pass,"aliasing",text="AA")
@@ -785,7 +789,7 @@ class BAKETOOL_PT_PassList(bpy.types.Panel):
                 Row.prop(Pass,"use_pass_glossy", text="Glossy",toggle = True, icon = "SHADING_TEXTURE")
                 Row.prop(Pass,"use_pass_transmission", text="Transm",toggle = True, icon = "SHADING_TEXTURE")
                 Row = Lin.column(align = True)
-                Row.prop(Pass,"use_pass_ambient_occlusion", text="AO",toggle = True, icon = "SHADING_TEXTURE")
+                #Row.prop(Pass,"use_pass_ambient_occlusion", text="AO",toggle = True, icon = "SHADING_TEXTURE")
                 Row.prop(Pass,"use_pass_emit", text="Emit",toggle = True, icon = "SHADING_TEXTURE")
 
             if(Pass.type == "DIFFUSE" or Pass.type == "GLOSSY" or Pass.type == "TRANSMISSION" or Pass.type == "SUBSURFACE"):
@@ -903,7 +907,7 @@ class BAKETOOL_PT_ObjList(bpy.types.Panel):
 
 class BAKETOOL_PT_Panel(bpy.types.Panel):
     """Main panel with bake properties for Bake Tool"""
-    bl_label = "BakeTool 2.4.2"
+    bl_label = "BakeTool 2.5.1"
     bl_idname = "BAKETOOL_PT_Panel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'

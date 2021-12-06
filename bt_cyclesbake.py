@@ -105,7 +105,7 @@ def Cycles_DoAtlasBake(activeJob):
 
                     FixUVNodes(mat,obj)
 
-                    keepMaterialOutput.append([node_tree,SetCustomMaterial(currentObject,mat,jobPass,settings)]);
+                    keepMaterialOutput.append([node_tree,SetCustomMaterial(currentObject,mat,jobPass,settings)])
 
                     SetBakeToolUV(obj)
 
