@@ -407,11 +407,11 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
             try:
                 principled = originalOut.inputs[0].links[0].from_node
                 if(principled.type == "BSDF_PRINCIPLED"):
-                    if(principled.inputs[4].is_linked):
-                        link = principled.inputs[4].links[0]
+                    if(principled.inputs[6].is_linked):
+                        link = principled.inputs[6].links[0]
                         node_tree.links.remove(link)
 
-                    principled.inputs[4].default_value = 0.0
+                    principled.inputs[6].default_value = 0.0
             except:
                 pass
         if(jobPass.type_simple == "SPECULAR"):
@@ -420,12 +420,12 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
                 principled = originalOut.inputs[0].links[0].from_node
                 if(principled.type == "BSDF_PRINCIPLED"):
                     # Get specular value or texture and connect to the new output
-                    if(principled.inputs[5].is_linked):
-                        texture = principled.inputs[5].links[0].from_socket
+                    if(principled.inputs[7].is_linked):
+                        texture = principled.inputs[7].links[0].from_socket
                         mat.node_tree.links.new(texture, nodeOut.inputs[0])
                     else:
                         nodeValue = node_tree.nodes.new('ShaderNodeValue')
-                        nodeValue.outputs[0].default_value = principled.inputs[5].default_value
+                        nodeValue.outputs[0].default_value = principled.inputs[7].default_value
                         mat.node_tree.links.new(nodeValue.outputs[0], nodeOut.inputs[0])
                     SetActiveNode(node_tree,nodeOut)
             except:
@@ -452,12 +452,12 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
                 principled = originalOut.inputs[0].links[0].from_node
                 if(principled.type == "BSDF_PRINCIPLED"):
                     # Get metallic value or texture and connect to the new output
-                    if(principled.inputs[4].is_linked):
-                        texture = principled.inputs[4].links[0].from_socket
+                    if(principled.inputs[6].is_linked):
+                        texture = principled.inputs[6].links[0].from_socket
                         mat.node_tree.links.new(texture, nodeOut.inputs[0])
                     else:
                         nodeValue = node_tree.nodes.new('ShaderNodeValue')
-                        nodeValue.outputs[0].default_value = principled.inputs[4].default_value
+                        nodeValue.outputs[0].default_value = principled.inputs[6].default_value
                         mat.node_tree.links.new(nodeValue.outputs[0], nodeOut.inputs[0])
 
                     SetActiveNode(node_tree,nodeOut)
