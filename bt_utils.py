@@ -402,6 +402,50 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
     nodeOut = node_tree.nodes.new('ShaderNodeOutputMaterial')
 
     if(settings.profile_type != "BLENDER"):
+        #fix the issue, that metallic value darken the diffuse
+        if(jobPass.type_simple == "ALBEDO"):
+            try:
+                principled = originalOut.inputs[0].links[0].from_node
+                if(principled.type == "BSDF_PRINCIPLED"):
+                    if(principled.inputs[4].is_linked):
+                        link = principled.inputs[4].links[0]
+                        node_tree.links.remove(link)
+
+                    principled.inputs[4].default_value = 0.0
+            except:
+                pass
+        if(jobPass.type_simple == "SPECULAR"):
+            try:
+                # Get current Principled
+                principled = originalOut.inputs[0].links[0].from_node
+                if(principled.type == "BSDF_PRINCIPLED"):
+                    # Get specular value or texture and connect to the new output
+                    if(principled.inputs[5].is_linked):
+                        texture = principled.inputs[5].links[0].from_socket
+                        mat.node_tree.links.new(texture, nodeOut.inputs[0])
+                    else:
+                        nodeValue = node_tree.nodes.new('ShaderNodeValue')
+                        nodeValue.outputs[0].default_value = principled.inputs[5].default_value
+                        mat.node_tree.links.new(nodeValue.outputs[0], nodeOut.inputs[0])
+                    SetActiveNode(node_tree,nodeOut)
+            except:
+                pass
+        if(jobPass.type_simple == "ALPHA"):
+            try:
+                # Get current Principled
+                principled = originalOut.inputs[0].links[0].from_node
+                if(principled.type == "BSDF_PRINCIPLED"):
+                    # Get specular value or texture and connect to the new output
+                    if(principled.inputs["Alpha"].is_linked):
+                        texture = principled.inputs["Alpha"].links[0].from_socket
+                        mat.node_tree.links.new(texture, nodeOut.inputs[0])
+                    else:
+                        nodeValue = node_tree.nodes.new('ShaderNodeValue')
+                        nodeValue.outputs[0].default_value = principled.inputs["Alpha"].default_value
+                        mat.node_tree.links.new(nodeValue.outputs[0], nodeOut.inputs[0])
+                    SetActiveNode(node_tree,nodeOut)
+            except:
+                pass
         if(jobPass.type_simple == "METALLIC"):
             try:
                 # Get current Principled
@@ -482,6 +526,7 @@ def GetActiveNode(nodes):
                     return node
 
 def GetOutputByName(nodes,name):
+    print("bbbbbbbbbbbbbbbbbbbbbbbbbb " + name)
     for node in nodes:
         if node.type == "OUTPUT_MATERIAL" and node.name == name:
             print("FOUND NODE: " + node.name)
@@ -644,6 +689,14 @@ def SetupBakeToolPass(jobPass,jobSettings):
         return "ROUGHNESS"
 
     if(jobPass.type_simple == "METALLIC"):
+        bpy.context.scene.cycles.samples = 8
+        return "EMIT"
+
+    if(jobPass.type_simple == "SPECULAR"):
+        bpy.context.scene.cycles.samples = 8
+        return "EMIT"
+
+    if(jobPass.type_simple == "ALPHA"):
         bpy.context.scene.cycles.samples = 8
         return "EMIT"
 

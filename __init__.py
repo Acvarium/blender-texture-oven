@@ -21,7 +21,7 @@
 bl_info = {
     "name": "BakeTool",
     "author": "Cogumelo Softworks",
-    "version": (2,4,1),
+    "version": (2,4,3),
     "blender": (2,83,0),
     "location": "3DView > Render> BakeTool",
     "description": "Bake Solution for Cycles",
@@ -176,7 +176,9 @@ class BakeTool_BakePass(bpy.types.PropertyGroup):
                             ("METALLIC","Metallic","",5),
                             ("SUBSURFACE","Subsurface","",6),
                             ("SHADOWS","Shadows","",7),
-                            ("ID","Id Map","",8)]
+                            ("ID","Id Map","",8),
+                            ("SPECULAR","Specular","",9),
+                            ("ALPHA","Alpha","",10)]
 
     sizetype = [                ("64","64","",1),
                                 ("128","128","",2),
@@ -436,6 +438,63 @@ class BakeTool_AddObjToTarget(bpy.types.Operator):
         return {'FINISHED'}
 
 # ------------------------------- UI JOBS --------------------------------------
+def DuplicateJob(context,id):
+    Job = bpy.context.scene.BakeTool_Jobs
+    if Job.index >= len(Job.Jobs):
+        return
+    ActiveJob = Job.Jobs[Job.index]
+    Bake_Pass = bpy.context.scene.BakeTool_Jobs.Jobs.add()
+    Bake_Pass.id = random.randint(0, 9999)
+    Bake_Pass.name = "Job " + str(len(bpy.context.scene.BakeTool_Jobs.Jobs))
+    Bake_Pass.job_settings.mode = ActiveJob.job_settings.mode
+    Bake_Pass.job_settings.profile_type = ActiveJob.job_settings.profile_type
+    Bake_Pass.job_settings.path = ActiveJob.job_settings.path
+    Bake_Pass.job_settings.target = ActiveJob.job_settings.target
+    Bake_Pass.job_settings.target_uv = ActiveJob.job_settings.target_uv
+    Bake_Pass.job_settings.cage = ActiveJob.job_settings.cage
+    Bake_Pass.job_settings.distance = ActiveJob.job_settings.distance
+    Bake_Pass.job_settings.bias = ActiveJob.job_settings.bias
+    Bake_Pass.job_settings.format = ActiveJob.job_settings.format
+    Bake_Pass.job_settings.atlas_autoPack = ActiveJob.job_settings.atlas_autoPack
+    Bake_Pass.job_settings.atlas_autoPack_margin = ActiveJob.job_settings.atlas_autoPack_margin
+    Bake_Pass.job_settings.atlas_autoPack_area = ActiveJob.job_settings.atlas_autoPack_area
+    Bake_Pass.job_settings.generate_uvwrap = ActiveJob.job_settings.generate_uvwrap
+    Bake_Pass.job_settings.uvwrapper_margn = ActiveJob.job_settings.uvwrapper_margin
+    Bake_Pass.job_settings.uvwrapper_angle = ActiveJob.job_settings.uvwrapper_angle
+    Bake_Pass.job_settings.postbake_importImages = ActiveJob.job_settings.postbake_importImages
+    Bake_Pass.job_settings.postbake_createEevee = ActiveJob.job_settings.postbake_createEevee
+    Bake_Pass.job_settings.postBake_eeveePass = ActiveJob.job_settings.postBake_eeveePass
+    Bake_Pass.job_settings.render_device = ActiveJob.job_settings.render_device
+    for item in ActiveJob.job_objs.coll:
+        new_item = Bake_Pass.job_objs.coll.add()
+        new_item.name = item.name
+    for active_pass in ActiveJob.job_pass.Pass:
+        new_pass = Bake_Pass.job_pass.Pass.add()
+        new_pass.id = random.randint(0, 9999)
+        new_pass.name = active_pass.name
+        new_pass.colors_space = active_pass.colors_space
+        new_pass.type_simple = active_pass.type_simple
+        new_pass.normal_simple_mode = active_pass.normal_simple_mode
+        new_pass.use_pass_diffuse = active_pass.use_pass_diffuse
+        new_pass.use_pass_glossy = active_pass.use_pass_glossy
+        new_pass.use_pass_transmission = active_pass.use_pass_transmission
+        new_pass.use_pass_ambient_occlusion = active_pass.use_pass_ambient_occlusion
+        new_pass.use_pass_emit = active_pass.use_pass_emit
+        new_pass.use_pass_color = active_pass.use_pass_color
+        new_pass.use_pass_direct = active_pass.use_pass_direct
+        new_pass.use_pass_indirect = active_pass.use_pass_indirect
+        new_pass.normal_space = active_pass.normal_space
+        new_pass.normal_space_bi = active_pass.normal_space_bi
+        new_pass.normal_r = active_pass.normal_r
+        new_pass.normal_g = active_pass.normal_g
+        new_pass.normal_b = active_pass.normal_b
+        new_pass.type = active_pass.type
+        new_pass.samples = active_pass.samples
+        new_pass.size = active_pass.size
+        new_pass.margin = active_pass.margin
+        new_pass.custom_output = active_pass.custom_output
+        new_pass.aliasing = active_pass.aliasing
+        new_pass.enabled = active_pass.enabled
 
 def AddJob():
     Bake_Pass = bpy.context.scene.BakeTool_Jobs.Jobs.add()
@@ -452,6 +511,17 @@ class BakeTool_AddJob(bpy.types.Operator):
 
     def execute(self, context):
         AddJob()
+        return {'FINISHED'}
+
+class BakeTool_DuplicateJob(bpy.types.Operator):
+    """Duplicate selected job"""
+    bl_idname = "baketool.duplicate_job"
+    bl_label = "Duplicate Job"
+
+    id : bpy.props.IntProperty()
+
+    def execute(self, context):
+        DuplicateJob(context,self.id)
         return {'FINISHED'}
 
 class BakeTool_RemoveJob(bpy.types.Operator):
@@ -833,7 +903,7 @@ class BAKETOOL_PT_ObjList(bpy.types.Panel):
 
 class BAKETOOL_PT_Panel(bpy.types.Panel):
     """Main panel with bake properties for Bake Tool"""
-    bl_label = "BakeTool 2.4.1"
+    bl_label = "BakeTool 2.4.2"
     bl_idname = "BAKETOOL_PT_Panel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -863,6 +933,7 @@ class BAKETOOL_PT_Panel(bpy.types.Panel):
         col = col.column(align = True)
         col.operator(BakeTool_AddJob.bl_idname, text = "",icon = "ADD")
         col.operator(BakeTool_RemoveJob.bl_idname, text ="", icon ="REMOVE")
+        col.operator(BakeTool_DuplicateJob.bl_idname, text ="", icon ="DUPLICATE")
 
         # Job houver um job ativo
         try:
@@ -925,6 +996,7 @@ classes = (
     BakeTool_PassPreview,
     BakeTool_AddJob,
     BakeTool_RemoveJob,
+    BakeTool_DuplicateJob,
     BakeTool_SelectObjFromScene,
     BakeTool_CyclesBake,
 

@@ -43,7 +43,7 @@ class BakeIndividual(bpy.types.Operator):
         return {'FINISHED'}
 
 def Cycles_DoAtlasBake(activeJob):
-
+    print("Cycles_DoAtlasBake")
     if(not activeJob.enabled):
         reports = LoadBakeReports()
         jobList = reports["jobs"]
@@ -58,6 +58,8 @@ def Cycles_DoAtlasBake(activeJob):
 
         settings = activeJob.job_settings
         listObjects = GetObjectListJob(activeJob,settings,True)
+        listObjectsFrom = GetObjectListJob(activeJob,settings,False)
+      
 
         passList = GetActivePasses(activeJob)
 
@@ -82,6 +84,31 @@ def Cycles_DoAtlasBake(activeJob):
             #keepMaterials = []
             keepMaterialOutput = []
             AlreadyHandledMaterials = []
+
+            #Setup materials for object, that will be baked from
+            for idx_obj,obj in  enumerate(listObjectsFrom):
+                currentObject = obj[0]
+                for mat in currentObject.data.materials:
+
+                    if(mat in AlreadyHandledMaterials):
+                        SetBakeToolUV(obj)
+                        continue
+
+                    print("FIXING MAT----------------------------------")
+                    print(mat)
+
+                    AlreadyHandledMaterials.append(mat)
+
+                    node_tree = mat.node_tree
+                    for node in node_tree.nodes:
+                        node.select = False
+
+                    FixUVNodes(mat,obj)
+
+                    keepMaterialOutput.append([node_tree,SetCustomMaterial(currentObject,mat,jobPass,settings)]);
+
+                    SetBakeToolUV(obj)
+
 
             # Para Cada Objeto
             for idx_obj,obj in enumerate(listObjects):
