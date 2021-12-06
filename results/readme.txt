@@ -1,0 +1,1 @@
+Default save destination for textures
