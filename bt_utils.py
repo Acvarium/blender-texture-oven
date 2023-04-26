@@ -398,7 +398,9 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
             originalOut = GetActiveNode(node_tree.nodes)
     else:
         originalOut = GetActiveNode(node_tree.nodes)
-
+    bprincipled = originalOut.inputs[0].links[0].from_node
+    print(bprincipled.inputs[10].default_value)
+    
     nodeOut = node_tree.nodes.new('ShaderNodeOutputMaterial')
 
     if(settings.profile_type != "BLENDER"):
@@ -409,8 +411,10 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
                 if(principled.type == "BSDF_PRINCIPLED"):
                     if(principled.inputs[6].is_linked):
                         link = principled.inputs[6].links[0]
+                        node_tree.links.new(link.from_socket, principled.inputs[10])
                         node_tree.links.remove(link)
-
+                    if (principled.inputs[6].default_value > 0.0):
+                        principled.inputs[10].default_value = principled.inputs[6].default_value 
                     principled.inputs[6].default_value = 0.0
             except:
                 pass
@@ -452,14 +456,13 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
                 principled = originalOut.inputs[0].links[0].from_node
                 if(principled.type == "BSDF_PRINCIPLED"):
                     # Get metallic value or texture and connect to the new output
-                    if(principled.inputs[6].is_linked):
-                        texture = principled.inputs[6].links[0].from_socket
+                    if(principled.inputs[10].is_linked):
+                        texture = principled.inputs[10].links[0].from_socket
                         mat.node_tree.links.new(texture, nodeOut.inputs[0])
                     else:
                         nodeValue = node_tree.nodes.new('ShaderNodeValue')
-                        nodeValue.outputs[0].default_value = principled.inputs[6].default_value
+                        nodeValue.outputs[0].default_value = principled.inputs[10].default_value
                         mat.node_tree.links.new(nodeValue.outputs[0], nodeOut.inputs[0])
-
                     SetActiveNode(node_tree,nodeOut)
             except:
                 pass
@@ -526,7 +529,6 @@ def GetActiveNode(nodes):
                     return node
 
 def GetOutputByName(nodes,name):
-    print("bbbbbbbbbbbbbbbbbbbbbbbbbb " + name)
     for node in nodes:
         if node.type == "OUTPUT_MATERIAL" and node.name == name:
             print("FOUND NODE: " + node.name)
