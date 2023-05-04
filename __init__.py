@@ -19,13 +19,13 @@
 # ##### END GPL LICENSE BLOCK #####
 
 bl_info = {
-    "name": "BakeTool",
-    "author": "Cogumelo Softworks",
-    "version": (2,5,1),
+    "name": "TextureOven",
+    "author": "Cogumelo Softworks, Vitalii Shmorhun",
+    "version": (2,5,3),
     "blender": (3,0,0),
-    "location": "3DView > Render> BakeTool",
-    "description": "Bake Solution for Cycles",
-    "wiki_url":  "http://cgcookiemarkets.com/blender/all-products/baketool/?view=docs",
+    "location": "3DView > Render> TextureOven",
+    "description": "Bake Organizer for Cycles",
+    "wiki_url":  "",
     "warning": "",
     "category": "Render"}
 
@@ -47,10 +47,10 @@ import bpy
 import random
 import os
 
-# BAKETOOL OPERATORS ----------------------------------------------------------------------------------------
-class BakeTool_MakeAtlas(bpy.types.Operator):
+# TEXTURE OVEN OPERATORS ----------------------------------------------------------------------------------------
+class TextureOven_MakeAtlas(bpy.types.Operator):
     """Make a Atlas with Active UVs of selected objects"""
-    bl_idname = "baketool.make_atlas"
+    bl_idname = "textureoven.make_atlas"
     bl_label = "Make UV Atlas"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -78,14 +78,14 @@ class BakeTool_MakeAtlas(bpy.types.Operator):
         lay.prop(self,"area_weight")
 
 # CYCLES BAKE -------------------------------------------------------------------------------------------------
-class BakeTool_CyclesBake(bpy.types.Operator):
+class TextureOven_CyclesBake(bpy.types.Operator):
     """ Bake this scene as config"""
-    bl_idname = "baketool.cyclesbake"
+    bl_idname = "textureoven.cyclesbake"
     bl_label = "Bake"
 
     @classmethod
     def poll(cls,context):
-        #if(context.scene.BakeTool_Jobs.is_baking == True):
+        #if(context.scene.TextureOven_Jobs.is_baking == True):
             #return False;
         return True
 
@@ -99,7 +99,7 @@ class BakeTool_CyclesBake(bpy.types.Operator):
         return {'FINISHED'}
 
 # GROUPS AND SCENE CONFIGS -----------------------------------------------------------------------------------------
-class BakeTool_Settings(bpy.types.PropertyGroup):
+class TextureOven_Settings(bpy.types.PropertyGroup):
 
 
     format_enum = [ ("PNG","PNG","",1),
@@ -111,14 +111,14 @@ class BakeTool_Settings(bpy.types.PropertyGroup):
     mode_enum = [   ("INDI","Individual","",1),
                     ("ATLAS","Atlas & Target","",2)]
 
-    profile_type_enum =[             ("BAKETOOL","BakeTool","",1),
+    profile_type_enum =[             ("TEXTUREOVEN","TextureOven","",1),
                                 ("BLENDER","Build-in","",2)]
 
-    profile_type : bpy.props.EnumProperty(name="PassMode",default = "BAKETOOL", items = profile_type_enum,description="Select the Pass Bake Mode")
+    profile_type : bpy.props.EnumProperty(name="PassMode",default = "TEXTUREOVEN", items = profile_type_enum,description="Select the Pass Bake Mode")
 
     mode : bpy.props.EnumProperty(name = "Bake Mode",  description = "Atlas = Bake all Objects to one texture group, Individual = Bake all objects as individual", default= "INDI", items = mode_enum)
 
-    path : bpy.props.StringProperty(default=bpy.utils.user_resource('SCRIPTS', path = "addons") + "/baketool/results/",subtype="DIR_PATH", description = "Save images in this location")
+    path : bpy.props.StringProperty(default="//",subtype="DIR_PATH", description = "Save images in this location")
     #keep : bpy.props.BoolProperty(default=True, description = "Save images inside Blender too")
     target : bpy.props.StringProperty(description = "if Target is filled it will bake all passes and objects for the target selected")
     target_uv : bpy.props.StringProperty()
@@ -127,11 +127,11 @@ class BakeTool_Settings(bpy.types.PropertyGroup):
     bias : bpy.props.FloatProperty(min=0.0, max=1.0, default = 0.1)
     format : bpy.props.EnumProperty(name="Format", default = "PNG", items = format_enum, description = "File format to save the texture baked as")
 
-    atlas_autoPack : bpy.props.BoolProperty(default=True, description = "Automatic Pack the UV of the Bake Objects in a single Atlas")
+    atlas_autoPack : bpy.props.BoolProperty(default=False, description = "Automatic Pack the UV of the Bake Objects in a single Atlas")
     atlas_autoPack_margin : bpy.props.FloatProperty(min=0.0, max=50.0, default = 0.05)
     atlas_autoPack_area : bpy.props.BoolProperty(default=True, description = "Use or not the Area Weight")
 
-    generate_uvwrap : bpy.props.BoolProperty(default=True, description = "Automaticaly generate UVs for ojects in the list when it's not set")
+    generate_uvwrap : bpy.props.BoolProperty(default=False, description = "Automaticaly generate UVs for ojects in the list when it's not set")
     uvwrapper_margin : bpy.props.FloatProperty(default = 0.1, description = "Margin between islands")
     uvwrapper_angle : bpy.props.FloatProperty(default = 80.0, max = 89.0, description = "Max angle to break islands")
 
@@ -142,19 +142,19 @@ class BakeTool_Settings(bpy.types.PropertyGroup):
     device_enum = [("GPU","GPU","",1),("CPU","CPU","",2)]
     render_device : bpy.props.EnumProperty(name = "Device", default = "GPU", items = device_enum, description="The Compute Device used to Bake, GPU is recomended for speed and CPU for compatibility")
 
-class BakeTool_ObjEntry(bpy.types.PropertyGroup):
+class TextureOven_ObjEntry(bpy.types.PropertyGroup):
     name : bpy.props.StringProperty()
     uv : bpy.props.StringProperty()
     overwriteUV : bpy.props.StringProperty()
 
-class BakeTool_ObjGroup(bpy.types.PropertyGroup):
-    coll : bpy.props.CollectionProperty(type=BakeTool_ObjEntry)
+class TextureOven_ObjGroup(bpy.types.PropertyGroup):
+    coll : bpy.props.CollectionProperty(type=TextureOven_ObjEntry)
     index : bpy.props.IntProperty()
 
-class BakeTool_MaterialSettings(bpy.types.PropertyGroup):
+class TextureOven_MaterialSettings(bpy.types.PropertyGroup):
     output : bpy.props.StringProperty()
 
-class BakeTool_BakePass(bpy.types.PropertyGroup):
+class TextureOven_BakePass(bpy.types.PropertyGroup):
 
     cyclestype = [          ("COMBINED","Combined","",1),
                             ("AO","Ambient Occlusion","",2),
@@ -202,7 +202,7 @@ class BakeTool_BakePass(bpy.types.PropertyGroup):
                                 ("2x","2x","",2),
                                 ("4x","4x","",3)]
 
-    colors_space : bpy.props.EnumProperty(name="Color Space",default = "Linear", items = color_space_type,description="Select The Color Space To Bake")
+    colors_space : bpy.props.EnumProperty(name="Color Space",default = "Non-Color", items = color_space_type,description="Select The Color Space To Bake")
 
     type_simple : bpy.props.EnumProperty(name="Type",default = "ALBEDO", items = simplePassType,description="Select the Pass Bake Mode")
 
@@ -245,30 +245,30 @@ class BakeTool_BakePass(bpy.types.PropertyGroup):
     size_x : bpy.props.IntProperty(default = 512, min = 16,description="The width value, square values are recomended")
     size_y : bpy.props.IntProperty(default = 512, min = 16,description="The height value, square values are recomended")
     '''
-    margin : bpy.props.IntProperty(default = 6 ,description="Pixel bledding beyond the islands, values > 0 <  12 are recomended")
+    margin : bpy.props.IntProperty(default = 32 ,description="Pixel bledding beyond the islands, values > 0 <  12 are recomended")
     custom_output : bpy.props.StringProperty(description = "Try to find the output node with this name and assign it to bake on this pass")
     aliasing : bpy.props.EnumProperty(name="Aliasing",default = "None", items = aliasing_type,description="Use SuperSampler Aliasing")
 
 
 
-class BakeTool_PassGroup(bpy.types.PropertyGroup):
-    Pass : bpy.props.CollectionProperty(type=BakeTool_BakePass)
+class TextureOven_PassGroup(bpy.types.PropertyGroup):
+    Pass : bpy.props.CollectionProperty(type=TextureOven_BakePass)
     index : bpy.props.IntProperty()
 
-class BakeTool_JobSettings(bpy.types.PropertyGroup):
+class TextureOven_JobSettings(bpy.types.PropertyGroup):
     name : bpy.props.StringProperty()
     enabled : bpy.props.BoolProperty(default = True)
-    job_objs : bpy.props.PointerProperty(type=BakeTool_ObjGroup)
-    job_pass : bpy.props.PointerProperty(type=BakeTool_PassGroup)
-    job_settings : bpy.props.PointerProperty(type=BakeTool_Settings)
+    job_objs : bpy.props.PointerProperty(type=TextureOven_ObjGroup)
+    job_pass : bpy.props.PointerProperty(type=TextureOven_PassGroup)
+    job_settings : bpy.props.PointerProperty(type=TextureOven_Settings)
 
-class BakeTool_Jobs(bpy.types.PropertyGroup):
-    Jobs : bpy.props.CollectionProperty(type=BakeTool_JobSettings)
+class TextureOven_Jobs(bpy.types.PropertyGroup):
+    Jobs : bpy.props.CollectionProperty(type=TextureOven_JobSettings)
     is_baking : bpy.props.BoolProperty()
     status : bpy.props.StringProperty()
     index : bpy.props.IntProperty()
 
-class BakeTool_ReportData(bpy.types.PropertyGroup):
+class TextureOven_ReportData(bpy.types.PropertyGroup):
     processCount : bpy.props.IntProperty()
     processCurrent : bpy.props.IntProperty()
     jobCurrent : bpy.props.IntProperty()
@@ -282,7 +282,7 @@ class BakeTool_ReportData(bpy.types.PropertyGroup):
     current_processPid: bpy.props.IntProperty()
 
 # INTERFCE ------------------------------------------------------------------------------------------------------
-class BAKETOOL_UL_Joblist(bpy.types.UIList):
+class TEXTUREOVEN_UL_Joblist(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         row = layout.row(align = False)
         row.prop(item,"enabled", text = "")
@@ -290,12 +290,12 @@ class BAKETOOL_UL_Joblist(bpy.types.UIList):
 
 
 # Pass LIST ----------------------------------
-class BAKETOOL_UL_Passlist(bpy.types.UIList):
+class TEXTUREOVEN_UL_Passlist(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         row = layout.row(align=True)
         row.prop(item,"name", text = "", emboss= False, icon = "RENDERLAYERS")
 
-        Job = bpy.context.scene.BakeTool_Jobs
+        Job = bpy.context.scene.TextureOven_Jobs
         ActiveJob = Job.Jobs[Job.index]
 
         if(ActiveJob.job_settings.profile_type == "BLENDER"):
@@ -308,7 +308,7 @@ class BAKETOOL_UL_Passlist(bpy.types.UIList):
 # OBJECT LIST ----------------------------------
 
 def AddObjList(context):
-    Job = bpy.context.scene.BakeTool_Jobs
+    Job = bpy.context.scene.TextureOven_Jobs
     ActiveJob = Job.Jobs[Job.index]
 
     for actObj in context.selected_objects:
@@ -321,13 +321,14 @@ def AddObjList(context):
                 item = ActiveJob.job_objs.coll.add()
                 item.name = actObj.name
                 # Tenta adicionar a UV ativa se houver
+                print(actObj.data.uv_layers.active.name)
                 try:
-                    item.uv = actObj.data.uv_textures.active.name
+                    item.uv = actObj.data.uv_layers.active.name
                 except:
                     pass
 
 def RemoveObjList(context,objname):
-    Job = bpy.context.scene.BakeTool_Jobs
+    Job = bpy.context.scene.TextureOven_Jobs
     ActiveJob = Job.Jobs[Job.index]
     ObjList = ActiveJob.job_objs
     #for ob in bpy.context.scene.objects:
@@ -336,7 +337,7 @@ def RemoveObjList(context,objname):
             ObjList.coll.remove(idx)
 
 def RemoveFromScene(context):
-    Job = bpy.context.scene.BakeTool_Jobs
+    Job = bpy.context.scene.TextureOven_Jobs
     ActiveJob = Job.Jobs[Job.index]
 
     ObjList = ActiveJob.job_objs
@@ -346,7 +347,7 @@ def RemoveFromScene(context):
                 ObjList.coll.remove(idx)
 
 def SelectFromScene(context,single):
-    Job = bpy.context.scene.BakeTool_Jobs
+    Job = bpy.context.scene.TextureOven_Jobs
     ActiveJob = Job.Jobs[Job.index]
     ObjList = ActiveJob.job_objs
     if single:
@@ -362,19 +363,19 @@ def SelectFromScene(context,single):
                     ob.select = True
 
 def ActiveToTarget(context):
-    Job = bpy.context.scene.BakeTool_Jobs
+    Job = bpy.context.scene.TextureOven_Jobs
     ActiveJob = Job.Jobs[Job.index]
 
     ActiveJob.job_settings.target = context.active_object.name
-    try: # Se tiver uma UV utiliza ela
-        ActiveJob.job_settings.target_uv = context.active_object.data.uv_textures[context.active_object.data.uv_textures.active_index].name
+    try: 
+        ActiveJob.job_settings.target_uv = context.active_object.data.uv_layers.active.name
     except:
         ActiveJob.job_settings.target_uv = ""
 
-class BAKETOOL_UL_ObjList(bpy.types.UIList):
+class TEXTUREOVEN_UL_ObjList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         row = layout.row(align = True)
-        Job = bpy.context.scene.BakeTool_Jobs
+        Job = bpy.context.scene.TextureOven_Jobs
         ActiveJob = Job.Jobs[Job.index]
         try:
             a = context.scene.objects[item.name]
@@ -386,44 +387,44 @@ class BAKETOOL_UL_ObjList(bpy.types.UIList):
                 else:
                     row.prop_search(item,"uv", context.scene.objects[item.name].data,"uv_layers", icon = "UV", text = "")
 
-            remove = row.operator(BakeTool_RemoveObj.bl_idname, icon ="X", text = "")
+            remove = row.operator(TextureOven_RemoveObj.bl_idname, icon ="X", text = "")
             remove.Obj = item.name
         except:
             row.label(text = "Invalid object")
-            remove = row.operator(BakeTool_RemoveObj.bl_idname, icon ="X", text = "")
+            remove = row.operator(TextureOven_RemoveObj.bl_idname, icon ="X", text = "")
             remove.Obj = item.name
 
-class BakeTool_AddObj(bpy.types.Operator):
+class TextureOven_AddObj(bpy.types.Operator):
     """ Add the selected objects of the scene"""
-    bl_idname = "baketool.add_obj"
+    bl_idname = "textureoven.add_obj"
     bl_label = "Add Active Object to the List"
 
     def execute(self, context):
         AddObjList(context)
         return {'FINISHED'}
 
-class BakeTool_RemoveObj(bpy.types.Operator):
+class TextureOven_RemoveObj(bpy.types.Operator):
     """Remove the selected object of list"""
-    bl_idname = "baketool.remove_obj"
-    bl_label = "Remove Active Object to the List"
+    bl_idname = "textureoven.remove_obj"
+    bl_label = "Remove Active Object from the List"
     Obj : bpy.props.StringProperty();
 
     def execute(self, context):
         RemoveObjList(context,self.Obj)
         return {'FINISHED'}
 
-class BakeTool_RemoveObjFromScene(bpy.types.Operator):
+class TextureOven_RemoveObjFromScene(bpy.types.Operator):
     """Remove the selected objects of the scene"""
-    bl_idname = "baketool.remove_selected"
+    bl_idname = "textureoven.remove_selected"
     bl_label = "Remove All Selected Objects From The Scene"
 
     def execute(self, context):
         RemoveFromScene(context)
         return {'FINISHED'}
 
-class BakeTool_SelectObjFromScene(bpy.types.Operator):
+class TextureOven_SelectObjFromScene(bpy.types.Operator):
     """Select on the scene the objects of the list"""
-    bl_idname = "baketool.selectlist"
+    bl_idname = "textureoven.selectlist"
     bl_label = "Select From Scene"
     single : bpy.props.BoolProperty();
 
@@ -431,9 +432,9 @@ class BakeTool_SelectObjFromScene(bpy.types.Operator):
         SelectFromScene(context,self.single)
         return {'FINISHED'}
 
-class BakeTool_AddObjToTarget(bpy.types.Operator):
+class TextureOven_AddObjToTarget(bpy.types.Operator):
     """Use the active object as the target"""
-    bl_idname = "baketool.add_target"
+    bl_idname = "textureoven.add_target"
     bl_label = "Active Object to Target"
 
     def execute(self, context):
@@ -442,13 +443,13 @@ class BakeTool_AddObjToTarget(bpy.types.Operator):
 
 # ------------------------------- UI JOBS --------------------------------------
 def DuplicateJob(context,id):
-    Job = bpy.context.scene.BakeTool_Jobs
+    Job = bpy.context.scene.TextureOven_Jobs
     if Job.index >= len(Job.Jobs):
         return
     ActiveJob = Job.Jobs[Job.index]
-    Bake_Pass = bpy.context.scene.BakeTool_Jobs.Jobs.add()
+    Bake_Pass = bpy.context.scene.TextureOven_Jobs.Jobs.add()
     Bake_Pass.id = random.randint(0, 9999)
-    Bake_Pass.name = "Job " + str(len(bpy.context.scene.BakeTool_Jobs.Jobs))
+    Bake_Pass.name = "Job_" + str(len(bpy.context.scene.TextureOven_Jobs.Jobs))
     Bake_Pass.job_settings.mode = ActiveJob.job_settings.mode
     Bake_Pass.job_settings.profile_type = ActiveJob.job_settings.profile_type
     Bake_Pass.job_settings.path = ActiveJob.job_settings.path
@@ -500,25 +501,25 @@ def DuplicateJob(context,id):
         new_pass.enabled = active_pass.enabled
 
 def AddJob():
-    Bake_Pass = bpy.context.scene.BakeTool_Jobs.Jobs.add()
+    Bake_Pass = bpy.context.scene.TextureOven_Jobs.Jobs.add()
     Bake_Pass.id = random.randint(0, 9999)
-    Bake_Pass.name = "Job " + str(len(bpy.context.scene.BakeTool_Jobs.Jobs))
+    Bake_Pass.name = "Job_" + str(len(bpy.context.scene.TextureOven_Jobs.Jobs))
 
 def RemoveJob(context,id):
-    bpy.context.scene.BakeTool_Jobs.Jobs.remove(bpy.context.scene.BakeTool_Jobs.index)
+    bpy.context.scene.TextureOven_Jobs.Jobs.remove(bpy.context.scene.TextureOven_Jobs.index)
 
-class BakeTool_AddJob(bpy.types.Operator):
+class TextureOven_AddJob(bpy.types.Operator):
     """Add a new pass to bake"""
-    bl_idname = "baketool.add_job"
+    bl_idname = "textureoven.add_job"
     bl_label = "Add Job"
 
     def execute(self, context):
         AddJob()
         return {'FINISHED'}
 
-class BakeTool_DuplicateJob(bpy.types.Operator):
+class TextureOven_DuplicateJob(bpy.types.Operator):
     """Duplicate selected job"""
-    bl_idname = "baketool.duplicate_job"
+    bl_idname = "textureoven.duplicate_job"
     bl_label = "Duplicate Job"
 
     id : bpy.props.IntProperty()
@@ -527,9 +528,9 @@ class BakeTool_DuplicateJob(bpy.types.Operator):
         DuplicateJob(context,self.id)
         return {'FINISHED'}
 
-class BakeTool_RemoveJob(bpy.types.Operator):
+class TextureOven_RemoveJob(bpy.types.Operator):
     """Remove this pass of the list"""
-    bl_idname = "baketool.remove_job"
+    bl_idname = "textureoven.remove_job"
     bl_label = "Remove Job"
 
     id : bpy.props.IntProperty()
@@ -541,23 +542,23 @@ class BakeTool_RemoveJob(bpy.types.Operator):
 # ------------------------------- UI PASSES --------------------------------------
 
 def AddPass():
-    Job = bpy.context.scene.BakeTool_Jobs
+    Job = bpy.context.scene.TextureOven_Jobs
     ActiveJob = Job.Jobs[Job.index]
     Bake_Pass = ActiveJob.job_pass.Pass.add()
     Bake_Pass.id = random.randint(0, 9999)
     Bake_Pass.enabled = True
-    Bake_Pass.name = "Pass " + str(len(ActiveJob.job_pass.Pass))
+    Bake_Pass.name = "Pass_" + str(len(ActiveJob.job_pass.Pass))
 
 def RemovePass(context,id):
-    Job = bpy.context.scene.BakeTool_Jobs
+    Job = bpy.context.scene.TextureOven_Jobs
     ActiveJob = Job.Jobs[Job.index]
     ActiveJob.job_pass.Pass.remove(ActiveJob.job_pass.index)
 
 def PassPreview():
-    Job = bpy.context.scene.BakeTool_Jobs
+    Job = bpy.context.scene.TextureOven_Jobs
     activeJob = Job.Jobs[Job.index]
     '''
-    if(activeJob.job_settings.profile_type != "BAKETOOL"):
+    if(activeJob.job_settings.profile_type != "TEXTUREOVEN"):
         jobTypeName = activeJob.job_pass.Pass[activeJob.job_pass.index].type
     else:
         jobTypeName = activeJob.job_pass.Pass[activeJob.job_pass.index].type_simple
@@ -567,7 +568,7 @@ def PassPreview():
 
     for mat in bpy.data.materials:
         imgNode = None
-        if("BAKETOOL_" + activeJob.name in mat.name):
+        if("TEXTUREOVEN_" + activeJob.name in mat.name):
             for node in mat.node_tree.nodes:
                 if(node.type == "TEX_IMAGE" and jobName in node.name):
                     imgNode = node
@@ -578,9 +579,9 @@ def PassPreview():
 
 
 
-class BakeTool_AddPass(bpy.types.Operator):
+class TextureOven_AddPass(bpy.types.Operator):
     """Add a new pass to bake"""
-    bl_idname = "baketool.add_pass"
+    bl_idname = "textureoven.add_pass"
     bl_label = "Add Pass"
 
 
@@ -588,9 +589,9 @@ class BakeTool_AddPass(bpy.types.Operator):
         AddPass()
         return {'FINISHED'}
 
-class BakeTool_RemovePass(bpy.types.Operator):
+class TextureOven_RemovePass(bpy.types.Operator):
     """Remove this pass of the list"""
-    bl_idname = "baketool.remove_layer"
+    bl_idname = "textureoven.remove_layer"
     bl_label = "Remove Pass"
 
     id : bpy.props.IntProperty()
@@ -599,9 +600,9 @@ class BakeTool_RemovePass(bpy.types.Operator):
         RemovePass(context,self.id)
         return {'FINISHED'}
 
-class BakeTool_PassPreview(bpy.types.Operator):
+class TextureOven_PassPreview(bpy.types.Operator):
     """Pass Preview"""
-    bl_idname = "baketool.pass_preview"
+    bl_idname = "textureoven.pass_preview"
     bl_label = "Pass Preview"
 
     id : bpy.props.IntProperty()
@@ -612,10 +613,10 @@ class BakeTool_PassPreview(bpy.types.Operator):
 
 #  -------------------------PAINEL PRINCIPAL ------------------------------
 
-class BAKETOOL_PT_UV(bpy.types.Panel):
+class TEXTUREOVEN_PT_UV(bpy.types.Panel):
     bl_label = "UV Settings"
-    bl_idname = "BAKETOOL_PT_UV"
-    bl_parent_id = "BAKETOOL_PT_Panel"
+    bl_idname = "TEXTUREOVEN_PT_UV"
+    bl_parent_id = "TEXTUREOVEN_PT_Panel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     #bl_context = "render"
@@ -624,7 +625,7 @@ class BAKETOOL_PT_UV(bpy.types.Panel):
     def poll(cls,context):
         if bpy.context.scene.render.engine == "CYCLES":
             try:
-                Job = bpy.context.scene.BakeTool_Jobs
+                Job = bpy.context.scene.TextureOven_Jobs
                 ActiveJob = Job.Jobs[Job.index]
                 return True
             except:
@@ -639,7 +640,7 @@ class BAKETOOL_PT_UV(bpy.types.Panel):
         layout.use_property_split = True # Active single-column layout
 
         Mode = bpy.context.scene.render.engine
-        Job = bpy.context.scene.BakeTool_Jobs
+        Job = bpy.context.scene.TextureOven_Jobs
 
         try:
             ActiveJob = Job.Jobs[Job.index]
@@ -661,10 +662,10 @@ class BAKETOOL_PT_UV(bpy.types.Panel):
                     layout.prop(ActiveJob.job_settings, "atlas_autoPack_margin", text = "Marge")
                     layout.prop(ActiveJob.job_settings, "atlas_autoPack_area", text = "Area Weight")
 
-class BAKETOOL_PT_PostRender(bpy.types.Panel):
+class TEXTUREOVEN_PT_PostRender(bpy.types.Panel):
     bl_label = "Post Render Settings"
-    bl_idname = "BAKETOOL_PT_PostRender"
-    bl_parent_id = "BAKETOOL_PT_Panel"
+    bl_idname = "TEXTUREOVEN_PT_PostRender"
+    bl_parent_id = "TEXTUREOVEN_PT_Panel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     #bl_context = "render"
@@ -673,7 +674,7 @@ class BAKETOOL_PT_PostRender(bpy.types.Panel):
     def poll(cls,context):
         if bpy.context.scene.render.engine == "CYCLES":
             try:
-                Job = bpy.context.scene.BakeTool_Jobs
+                Job = bpy.context.scene.TextureOven_Jobs
                 ActiveJob = Job.Jobs[Job.index]
                 return True
             except:
@@ -687,7 +688,7 @@ class BAKETOOL_PT_PostRender(bpy.types.Panel):
         layout.use_property_split = True # Active single-column layout
 
         Mode = bpy.context.scene.render.engine
-        Job = bpy.context.scene.BakeTool_Jobs
+        Job = bpy.context.scene.TextureOven_Jobs
 
         try:
             ActiveJob = Job.Jobs[Job.index]
@@ -699,10 +700,10 @@ class BAKETOOL_PT_PostRender(bpy.types.Panel):
         if ActiveJob.job_settings.mode != "ATLAS":
             layout.prop(ActiveJob.job_settings, "postbake_createEevee", text = "Create Eevee Scene")
 
-class BAKETOOL_PT_PassList(bpy.types.Panel):
+class TEXTUREOVEN_PT_PassList(bpy.types.Panel):
     bl_label = "Pass Settings"
-    bl_idname = "BAKETOOL_PT_PassList"
-    bl_parent_id = "BAKETOOL_PT_Panel"
+    bl_idname = "TEXTUREOVEN_PT_PassList"
+    bl_parent_id = "TEXTUREOVEN_PT_Panel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     #bl_context = "render"
@@ -711,7 +712,7 @@ class BAKETOOL_PT_PassList(bpy.types.Panel):
     def poll(cls,context):
         if bpy.context.scene.render.engine == "CYCLES":
             try:
-                Job = bpy.context.scene.BakeTool_Jobs
+                Job = bpy.context.scene.TextureOven_Jobs
                 ActiveJob = Job.Jobs[Job.index]
                 return True
             except:
@@ -726,7 +727,7 @@ class BAKETOOL_PT_PassList(bpy.types.Panel):
         layout.use_property_split = True # Active single-column layout
 
         Mode = bpy.context.scene.render.engine
-        Job = bpy.context.scene.BakeTool_Jobs
+        Job = bpy.context.scene.TextureOven_Jobs
         try:
             ActiveJob = Job.Jobs[Job.index]
         except:
@@ -734,11 +735,11 @@ class BAKETOOL_PT_PassList(bpy.types.Panel):
             return
         # PASS LIST ----------------------------------------------
         col = layout.row(align = True)
-        col.template_list("BAKETOOL_UL_Passlist", "", ActiveJob.job_pass, "Pass", ActiveJob.job_pass, "index",rows=2, type = "DEFAULT")
+        col.template_list("TEXTUREOVEN_UL_Passlist", "", ActiveJob.job_pass, "Pass", ActiveJob.job_pass, "index",rows=2, type = "DEFAULT")
         col = col.column(align = True)
-        col.operator(BakeTool_AddPass.bl_idname, text = "",icon = "ADD")
-        col.operator(BakeTool_RemovePass.bl_idname, text ="", icon ="REMOVE")
-        col.operator(BakeTool_PassPreview.bl_idname, text ="", icon ="SHADING_RENDERED")
+        col.operator(TextureOven_AddPass.bl_idname, text = "",icon = "ADD")
+        col.operator(TextureOven_RemovePass.bl_idname, text ="", icon ="REMOVE")
+        col.operator(TextureOven_PassPreview.bl_idname, text ="", icon ="SHADING_RENDERED")
 
         # Existe um passo ativo
         try:
@@ -804,7 +805,7 @@ class BAKETOOL_PT_PassList(bpy.types.Panel):
             layout.label(text= "Other Settings:", icon ="RENDERLAYERS")
             layout.prop(Pass, "custom_output", text = "Custom Output" , icon ="SHADING_TEXTURE" )
 
-        # Baketool profile
+        # TextureOven profile
         else:
             row = layout.column()
             row.prop(Pass,"type_simple")
@@ -824,10 +825,10 @@ class BAKETOOL_PT_PassList(bpy.types.Panel):
                 row = layout.row()
                 row.prop(Pass,"samples", text= "Samples")
 
-class BAKETOOL_PT_ObjList(bpy.types.Panel):
+class TEXTUREOVEN_PT_ObjList(bpy.types.Panel):
     bl_label = "Object Settings"
-    bl_idname = "BAKETOOL_PT_ObjList"
-    bl_parent_id = "BAKETOOL_PT_Panel"
+    bl_idname = "TEXTUREOVEN_PT_ObjList"
+    bl_parent_id = "TEXTUREOVEN_PT_Panel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     #bl_context = "render"
@@ -836,7 +837,7 @@ class BAKETOOL_PT_ObjList(bpy.types.Panel):
     def poll(cls,context):
         if bpy.context.scene.render.engine == "CYCLES":
             try:
-                Job = bpy.context.scene.BakeTool_Jobs
+                Job = bpy.context.scene.TextureOven_Jobs
                 ActiveJob = Job.Jobs[Job.index]
                 return True
             except:
@@ -851,7 +852,7 @@ class BAKETOOL_PT_ObjList(bpy.types.Panel):
         layout.use_property_split = True # Active single-column layout
 
         Mode = bpy.context.scene.render.engine
-        Job = bpy.context.scene.BakeTool_Jobs
+        Job = bpy.context.scene.TextureOven_Jobs
 
         try:
             ActiveJob = Job.Jobs[Job.index]
@@ -861,13 +862,13 @@ class BAKETOOL_PT_ObjList(bpy.types.Panel):
         ActiveJob.job_settings.mode == "ATLAS"
 
         col = layout.row(align = True)
-        col.template_list("BAKETOOL_UL_ObjList", "", ActiveJob.job_objs, "coll", ActiveJob.job_objs, "index",rows=3, type = "DEFAULT")
+        col.template_list("TEXTUREOVEN_UL_ObjList", "", ActiveJob.job_objs, "coll", ActiveJob.job_objs, "index",rows=3, type = "DEFAULT")
         col = col.column(align = True)
-        col.operator(BakeTool_AddObj.bl_idname, icon ="EYEDROPPER", text = "")
-        col.operator(BakeTool_RemoveObjFromScene.bl_idname, icon ="CANCEL", text = "")
-        single = col.operator(BakeTool_SelectObjFromScene.bl_idname, icon ="VIEWZOOM", text = "")
+        col.operator(TextureOven_AddObj.bl_idname, icon ="EYEDROPPER", text = "")
+        col.operator(TextureOven_RemoveObjFromScene.bl_idname, icon ="CANCEL", text = "")
+        single = col.operator(TextureOven_SelectObjFromScene.bl_idname, icon ="VIEWZOOM", text = "")
         single.single = True
-        multiple = col.operator(BakeTool_SelectObjFromScene.bl_idname, icon ="BORDERMOVE", text = "")
+        multiple = col.operator(TextureOven_SelectObjFromScene.bl_idname, icon ="BORDERMOVE", text = "")
         multiple.single = False
 
         # OVERWRITE UV
@@ -883,8 +884,9 @@ class BAKETOOL_PT_ObjList(bpy.types.Panel):
         # TARGET MANAGER ------------------------------------------------
         if ActiveJob.job_settings.mode == "ATLAS":
             layout.label(text = "Bake To Target:", icon = "OBJECT_DATAMODE")
-            layout.prop_search(ActiveJob.job_settings, "target",  bpy.context.view_layer, "objects", text="Target:")
-            #row.operator(BakeTool_AddObjToTarget.bl_idname, text = "",icon = "EYEDROPPER")
+            row = layout.row()
+            row.prop_search(ActiveJob.job_settings, "target",  bpy.context.view_layer, "objects", text="Target:")
+            row.operator(TextureOven_AddObjToTarget.bl_idname, text = "",icon = "EYEDROPPER")
 
             if ActiveJob.job_settings.target != "":
 
@@ -905,13 +907,13 @@ class BAKETOOL_PT_ObjList(bpy.types.Panel):
                 else:
                     layout.label(text= "WARNING: Select a Mesh Object")
 
-class BAKETOOL_PT_Panel(bpy.types.Panel):
+class TEXTUREOVEN_PT_Panel(bpy.types.Panel):
     """Main panel with bake properties for Bake Tool"""
-    bl_label = "BakeTool 2.5.1"
-    bl_idname = "BAKETOOL_PT_Panel"
+    bl_label = "TextureOven 2.5.3"
+    bl_idname = "TEXTUREOVEN_PT_Panel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "BakeTool"
+    bl_category = "TextureOven"
 
     def draw(self,context):
         if bpy.context.scene.render.engine != "CYCLES":
@@ -925,19 +927,19 @@ class BAKETOOL_PT_Panel(bpy.types.Panel):
         layout.use_property_split = True # Active single-column layout
 
         Mode = bpy.context.scene.render.engine
-        Job = bpy.context.scene.BakeTool_Jobs
+        Job = bpy.context.scene.TextureOven_Jobs
 
         row = layout.row()
         row.scale_y = 2
-        row.operator(BakeTool_CyclesBake.bl_idname, icon= "RENDER_STILL", text = "BAKE")
+        row.operator(TextureOven_CyclesBake.bl_idname, icon= "RENDER_STILL", text = "BAKE")
         layout.separator()
         layout.label(text = "Jobs Settings:", icon = "WINDOW")
         col = layout.row(align = True)
-        col.template_list("BAKETOOL_UL_Joblist", "", Job, "Jobs", Job, "index",rows=2, type = "DEFAULT")
+        col.template_list("TEXTUREOVEN_UL_Joblist", "", Job, "Jobs", Job, "index",rows=2, type = "DEFAULT")
         col = col.column(align = True)
-        col.operator(BakeTool_AddJob.bl_idname, text = "",icon = "ADD")
-        col.operator(BakeTool_RemoveJob.bl_idname, text ="", icon ="REMOVE")
-        col.operator(BakeTool_DuplicateJob.bl_idname, text ="", icon ="DUPLICATE")
+        col.operator(TextureOven_AddJob.bl_idname, text = "",icon = "ADD")
+        col.operator(TextureOven_RemoveJob.bl_idname, text ="", icon ="REMOVE")
+        col.operator(TextureOven_DuplicateJob.bl_idname, text ="", icon ="DUPLICATE")
 
         # Job houver um job ativo
         try:
@@ -965,62 +967,62 @@ class BAKETOOL_PT_Panel(bpy.types.Panel):
             row = layout.row()
             row.prop(ActiveJob.job_settings, "render_device", text="Render Device")
 
-class BakeTool_MT_Menu(bpy.types.Menu):
-    bl_label = "BakeTool Operators"
-    bl_idname = "OBJECT_MT_BakeTool_MT_Menu"
+class TextureOven_MT_Menu(bpy.types.Menu):
+    bl_label = "TextureOven Operators"
+    bl_idname = "OBJECT_MT_TextureOven_MT_Menu"
 
     def draw(self, context):
         layout = self.layout
-        layout.operator("baketool.make_atlas")
+        layout.operator("textureoven.make_atlas")
 
-def VIEW3D_BakeTool_MT_Menu(self, context):
-    self.layout.menu(BakeTool_MT_Menu.bl_idname)
+def VIEW3D_TextureOven_MT_Menu(self, context):
+    self.layout.menu(TextureOven_MT_Menu.bl_idname)
 
 classes = (
-    BakeTool_ObjEntry,
-    BakeTool_ObjGroup,
-    BakeTool_BakePass,
-    BakeTool_PassGroup,
-    BakeTool_MaterialSettings,
-    BakeTool_Settings,
-    BakeTool_JobSettings,
-    BakeTool_Jobs,
-    BakeTool_ReportData,
+    TextureOven_ObjEntry,
+    TextureOven_ObjGroup,
+    TextureOven_BakePass,
+    TextureOven_PassGroup,
+    TextureOven_MaterialSettings,
+    TextureOven_Settings,
+    TextureOven_JobSettings,
+    TextureOven_Jobs,
+    TextureOven_ReportData,
 
-    BAKETOOL_UL_ObjList,
-    BAKETOOL_UL_Passlist,
-    BAKETOOL_UL_Joblist,
+    TEXTUREOVEN_UL_ObjList,
+    TEXTUREOVEN_UL_Passlist,
+    TEXTUREOVEN_UL_Joblist,
 
-    BakeTool_AddObj,
-    BakeTool_RemoveObj,
-    BakeTool_RemoveObjFromScene,
-    BakeTool_AddObjToTarget,
-    BakeTool_AddPass,
-    BakeTool_RemovePass,
-    BakeTool_PassPreview,
-    BakeTool_AddJob,
-    BakeTool_RemoveJob,
-    BakeTool_DuplicateJob,
-    BakeTool_SelectObjFromScene,
-    BakeTool_CyclesBake,
+    TextureOven_AddObj,
+    TextureOven_RemoveObj,
+    TextureOven_RemoveObjFromScene,
+    TextureOven_AddObjToTarget,
+    TextureOven_AddPass,
+    TextureOven_RemovePass,
+    TextureOven_PassPreview,
+    TextureOven_AddJob,
+    TextureOven_RemoveJob,
+    TextureOven_DuplicateJob,
+    TextureOven_SelectObjFromScene,
+    TextureOven_CyclesBake,
 
-    BakeTool_MT_Menu,
-    BAKETOOL_PT_Panel,
-    BAKETOOL_PT_UV,
-    BAKETOOL_PT_ObjList,
-    BAKETOOL_PT_PassList,
-    BAKETOOL_PT_PostRender,
+    TextureOven_MT_Menu,
+    TEXTUREOVEN_PT_Panel,
+    TEXTUREOVEN_PT_UV,
+    TEXTUREOVEN_PT_ObjList,
+    TEXTUREOVEN_PT_PassList,
+    TEXTUREOVEN_PT_PostRender,
 
-    BakeTool_MakeAtlas,
+    TextureOven_MakeAtlas,
     bt_cyclesbake.BakeIndividual,
     bt_cyclesbake.BakeAtlas,
-    bt_reports.BakeToolReports,
-    #bt_error_reports.BakeToolErrorReports
+    bt_reports.TextureOvenReports,
+    #bt_error_reports.TextureOvenErrorReports
 )
 
 @bpy.app.handlers.persistent
 def loadPost(scene):
-    bpy.context.scene.BakeTool_Jobs.is_baking = False
+    bpy.context.scene.TextureOven_Jobs.is_baking = False
 
 def register():
 
@@ -1028,18 +1030,18 @@ def register():
     for c in classes:
         register_class(c)
 
-    bpy.types.Scene.BakeTool_Objects = bpy.props.PointerProperty(type=BakeTool_ObjGroup)
-    bpy.types.Material.BakeTool_MaterialSettings = bpy.props.PointerProperty(type=BakeTool_MaterialSettings)
-    bpy.types.Scene.BakeTool_Settings = bpy.props.PointerProperty(type=BakeTool_Settings)
-    bpy.types.Scene.BakeTool_Jobs = bpy.props.PointerProperty(type=BakeTool_Jobs)
-    bpy.types.Scene.BakeTool_ReportData = bpy.props.PointerProperty(type=BakeTool_ReportData)
+    bpy.types.Scene.TextureOven_Objects = bpy.props.PointerProperty(type=TextureOven_ObjGroup)
+    bpy.types.Material.TextureOven_MaterialSettings = bpy.props.PointerProperty(type=TextureOven_MaterialSettings)
+    bpy.types.Scene.TextureOven_Settings = bpy.props.PointerProperty(type=TextureOven_Settings)
+    bpy.types.Scene.TextureOven_Jobs = bpy.props.PointerProperty(type=TextureOven_Jobs)
+    bpy.types.Scene.TextureOven_ReportData = bpy.props.PointerProperty(type=TextureOven_ReportData)
 
     bpy.app.handlers.load_post.append(loadPost)
-    bpy.types.VIEW3D_MT_object.append(VIEW3D_BakeTool_MT_Menu)
+    bpy.types.VIEW3D_MT_object.append(VIEW3D_TextureOven_MT_Menu)
 
 def unregister():
 
-    bpy.types.VIEW3D_MT_object.remove(VIEW3D_BakeTool_MT_Menu)
+    bpy.types.VIEW3D_MT_object.remove(VIEW3D_TextureOven_MT_Menu)
 
     from bpy.utils import unregister_class
     for c in classes:

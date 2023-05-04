@@ -12,9 +12,9 @@ import bpy
 
 class GUIOperator(bpy.types.Operator):
 
-    bl_idname = "baketool.makepanel"
-    bl_label = "BakeTool Reports"
-    bl_description = "BakeTool Reports"
+    bl_idname = "textureoven.makepanel"
+    bl_label = "TextureOven Reports"
+    bl_description = "TextureOven Reports"
     bl_options = {'REGISTER'}
 
     def __init__(self):

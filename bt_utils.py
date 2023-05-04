@@ -101,7 +101,7 @@ def CreateImageNode(mat,tempImage):
     # Torna Imagem Ativa
     mat.node_tree.nodes.active = image_node
 
-def SetBakeToolUV(objData):
+def SetTextureOvenUV(objData):
     active_uv = None
     for f in objData[0].data.uv_layers:
         if(f.name == objData[1].uv):
@@ -236,7 +236,7 @@ def CheckBake(context,jobList):
 
     # Verifica se o arquivo está salvo
     if not bpy.data.is_saved:
-        status = 'BAKETOOL ABORTED: Save the File before bake'
+        status = 'TEXTUREOVEN ABORTED: Save the File before bake'
         return status
 
     for activeJob in jobList:
@@ -246,18 +246,18 @@ def CheckBake(context,jobList):
         objectList = activeJob.job_objs.coll
         if(len(objectList) == 0):
 
-            status = 'BAKETOOL ABORTED: on the job: "' + activeJob.name + '" - No valid object to bake in Bake List'
+            status = 'TEXTUREOVEN ABORTED: on the job: "' + activeJob.name + '" - No valid object to bake in Bake List'
             return status
 
         # Verifica se existe um path válido para salvar as imagens
         if(not os.path.exists(bpy.path.abspath(activeJob.job_settings.path))):
-            status = "BAKETOOL ABORTED: on the job: ''" + activeJob.name + ". save path do not exist"
+            status = "TEXTUREOVEN ABORTED: on the job: ''" + activeJob.name + ". save path do not exist"
             return status
 
         # Verifica se existem  objetos na lista e se todos os objetos da lista estão visíveis
         checkstatus,objError = CheckVisible(objectList)
         if(checkstatus == False):
-            status = "BAKETOOL ABORTED: on the job: ''" + activeJob.name + "''. Object ''" + objError.name + "'' is not visible in the scene"
+            status = "TEXTUREOVEN ABORTED: on the job: ''" + activeJob.name + "''. Object ''" + objError.name + "'' is not visible in the scene"
             return status
 
         #Seta Objeto Ativo para Objetct Mode se não estiver
@@ -275,13 +275,13 @@ def CheckBake(context,jobList):
             '''
             target = context.scene.objects[settings.target]
             if not target.is_visible(context.scene):
-                status = 'BAKETOOL ABORTED: "' + activeJob.name + '" - Active Target object is not visible'
+                status = 'TEXTUREOVEN ABORTED: "' + activeJob.name + '" - Active Target object is not visible'
                 return status
             '''
 
             for obj_name in activeJob.job_objs.coll:
                 if obj_name.name == settings.target:
-                    status = 'BAKETOOL ABORTED: "' + activeJob.name + '" - Target object is in the source list, change it'
+                    status = 'TEXTUREOVEN ABORTED: "' + activeJob.name + '" - Target object is in the source list, change it'
                     return status
 
             # A lista é preenchida com os dados do Target
@@ -299,11 +299,11 @@ def CheckBake(context,jobList):
         # Verifica se os objetos da Lista possuem material do Cycles:
         for obj in listObjects:
             if len(obj[0].material_slots) == 0:
-                status = 'BAKETOOL ABORTED: "' + activeJob.name + '" - One or more objects in the List to Bake do not have a valid material: ' + obj[0].name
+                status = 'TEXTUREOVEN ABORTED: "' + activeJob.name + '" - One or more objects in the List to Bake do not have a valid material: ' + obj[0].name
                 return status
             for mat in obj[0].material_slots:
                 if mat.material == None:
-                    status = 'BAKETOOL ABORTED: "' + activeJob.name + '" - One or more objects in the List to Bake do not have a valid material: ' + obj[0].name
+                    status = 'TEXTUREOVEN ABORTED: "' + activeJob.name + '" - One or more objects in the List to Bake do not have a valid material: ' + obj[0].name
                     return status
                 else:
                     valid = False
@@ -312,17 +312,17 @@ def CheckBake(context,jobList):
                             if node.bl_idname == "ShaderNodeOutputMaterial":
                                 valid = True
                         if not valid:
-                            status = 'BAKETOOL ABORTED: "' + activeJob.name + '" - One or more objects in the List to Bake do not have a valid node material'
+                            status = 'TEXTUREOVEN ABORTED: "' + activeJob.name + '" - One or more objects in the List to Bake do not have a valid node material'
                             return status
                     else:
-                        status = 'BAKETOOL ABORTED: "' + activeJob.name + '" - One or more objects in the List to Bake don not have a valid cycles node material'
+                        status = 'TEXTUREOVEN ABORTED: "' + activeJob.name + '" - One or more objects in the List to Bake don not have a valid cycles node material'
                         return status
 
         # Verifica se os objetos da Lista possuem UV ativa se não estiver gerando UVs:
         if( not activeJob.job_settings.generate_uvwrap):
             for obj in listObjects:
                 if(obj[1].uv == ""):
-                    status = 'BAKETOOL ABORTED: "' + activeJob.name + '" - Object in the List to Bake do not have a valid uv set'
+                    status = 'TEXTUREOVEN ABORTED: "' + activeJob.name + '" - Object in the List to Bake do not have a valid uv set'
                     return status
 
         # Verifica se existe ao menos 1 passo habilitado
@@ -331,7 +331,7 @@ def CheckBake(context,jobList):
             if job.enabled:
                 hasPass = True
         if not hasPass:
-            status = 'BAKETOOL ABORTED: "' + activeJob.name + '" You need at least one enabled pass to Bake'
+            status = 'TEXTUREOVEN ABORTED: "' + activeJob.name + '" You need at least one enabled pass to Bake'
             return status
 
     print ("--------------------- STATUS CHECK -----------------")
@@ -565,13 +565,13 @@ def CreateIndividualEveeScene(activeJob):
     # Remove Collection
     tempCollection = False
     for col in bpy.context.scene.collection.children:
-        if(col.name == "BAKETOOL_" + activeJob.name):
+        if(col.name == "TEXTUREOVEN_" + activeJob.name):
             for obj in col.objects:
                 bpy.data.objects.remove(obj)
             bpy.data.collections.remove(col)
 
     # Create collection
-    tempCollection = bpy.data.collections.new("BAKETOOL_" + activeJob.name)
+    tempCollection = bpy.data.collections.new("TEXTUREOVEN_" + activeJob.name)
     bpy.context.scene.collection.children.link(tempCollection)
 
     # Atlas mode
@@ -590,7 +590,7 @@ def CreateIndividualEveeScene(activeJob):
         newObj.data.uv_layers.active = obj.data.uv_layers.active
 
         for f in newObj.data.uv_layers:
-            if("BAKETOOL_" + activeJob.job_settings.name in f.name):
+            if("TEXTUREOVEN_" + activeJob.job_settings.name in f.name):
                 f.active = True
                 f.active_render = True
                 f.active_clone = True
@@ -601,9 +601,9 @@ def CreateIndividualEveeScene(activeJob):
         newObj.data.materials.clear()
 
         # Cria Material
-        mat = bpy.data.materials.get("BAKETOOL_" + activeJob.name + "_"  + obj.name)
+        mat = bpy.data.materials.get("TEXTUREOVEN_" + activeJob.name + "_"  + obj.name)
         if(mat is None):
-            mat = bpy.data.materials.new(name="BAKETOOL_" + activeJob.name + "_" + obj.name)
+            mat = bpy.data.materials.new(name="TEXTUREOVEN_" + activeJob.name + "_" + obj.name)
         newObj.data.materials.append(mat)
 
         # Configure Material
@@ -611,7 +611,7 @@ def CreateIndividualEveeScene(activeJob):
 
         for p in range(len(activeJob.job_pass.Pass)):
             '''
-            if(activeJob.job_settings.profile_type != "BAKETOOL"):
+            if(activeJob.job_settings.profile_type != "TEXTUREOVEN"):
                 jobTypeName = activeJob.job_pass.Pass[p].type
             else:
                 jobTypeName = activeJob.job_pass.Pass[p].type_simple
@@ -622,13 +622,13 @@ def CreateIndividualEveeScene(activeJob):
             # Check if Has Image node and Create if Not
             imgNode = None
             for node in mat.node_tree.nodes:
-                if(node.type == "TEX_IMAGE" and node.name == "BAKETOOL_" + jobName + "_" + obj.name):
+                if(node.type == "TEX_IMAGE" and node.name == "TEXTUREOVEN_" + jobName + "_" + obj.name):
                     imgNode = node
 
             if(imgNode == None):
                 # Create image Node
                 imgNode = mat.node_tree.nodes.new('ShaderNodeTexImage')
-                imgNode.name = "BAKETOOL_" + jobName + "_" + obj.name
+                imgNode.name = "TEXTUREOVEN_" + jobName + "_" + obj.name
 
                 img = bpy.data.images[activeJob.name + "_" + obj.name + "_" + jobName]
                 imgNode.image = img
@@ -646,7 +646,7 @@ def CreateIndividualEveeScene(activeJob):
                     #mat.node_tree.links.new(node.inputs[0],imgNode.outputs[0])
 
 
-def SetupBakeToolPass(jobPass,jobSettings):
+def SetupTextureOvenPass(jobPass,jobSettings):
     RemoveColorManagement()
 
     # BLENDER PROFILES
@@ -660,7 +660,7 @@ def SetupBakeToolPass(jobPass,jobSettings):
         if(jobPass.type_simple == "ALBEDO"):
             return "DIFFUSE"
 
-    # BAKETOOL PROFILES
+    # TEXTUREOVEN PROFILES
     else:
 
         if(jobPass.type_simple == "NORMAL"):

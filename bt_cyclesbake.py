@@ -16,13 +16,13 @@ from bpy_extras.image_utils import load_image
 
 class BakeAtlas(bpy.types.Operator):
     """Tooltip"""
-    bl_idname = "baketool.bakeatlas"
-    bl_label = "BakeTool: Bake Atlas"
+    bl_idname = "textureoven.bakeatlas"
+    bl_label = "TextureOven: Bake Atlas"
 
     job : bpy.props.StringProperty()
 
     def execute(self, context):
-        Jobs = context.scene.BakeTool_Jobs.Jobs
+        Jobs = context.scene.TextureOven_Jobs.Jobs
         for j in Jobs:
             if(j.name == self.job):
                 Cycles_DoAtlasBake(j)
@@ -30,13 +30,13 @@ class BakeAtlas(bpy.types.Operator):
 
 class BakeIndividual(bpy.types.Operator):
     """Tooltip"""
-    bl_idname = "baketool.bakeindividual"
-    bl_label = "BakeTool: Bake Individual"
+    bl_idname = "textureoven.bakeindividual"
+    bl_label = "TextureOven: Bake Individual"
 
     job : bpy.props.StringProperty()
 
     def execute(self, context):
-        Jobs = context.scene.BakeTool_Jobs.Jobs
+        Jobs = context.scene.TextureOven_Jobs.Jobs
         for j in Jobs:
             if(j.name == self.job):
                 Cycles_DoIndividualBake(j)
@@ -91,7 +91,7 @@ def Cycles_DoAtlasBake(activeJob):
                 for mat in currentObject.data.materials:
 
                     if(mat in AlreadyHandledMaterials):
-                        SetBakeToolUV(obj)
+                        SetTextureOvenUV(obj)
                         continue
 
                     print("FIXING MAT----------------------------------")
@@ -107,7 +107,7 @@ def Cycles_DoAtlasBake(activeJob):
 
                     keepMaterialOutput.append([node_tree,SetCustomMaterial(currentObject,mat,jobPass,settings)])
 
-                    SetBakeToolUV(obj)
+                    SetTextureOvenUV(obj)
 
 
             # Para Cada Objeto
@@ -135,7 +135,7 @@ def Cycles_DoAtlasBake(activeJob):
                 for mat in currentObject.data.materials:
 
                     if(mat in AlreadyHandledMaterials):
-                        SetBakeToolUV(obj)
+                        SetTextureOvenUV(obj)
                         continue
 
                     print("FIXING MAT----------------------------------")
@@ -162,7 +162,7 @@ def Cycles_DoAtlasBake(activeJob):
                     # Torna Imagem Ativa
                     mat.node_tree.nodes.active = image_node
 
-                    SetBakeToolUV(obj)
+                    SetTextureOvenUV(obj)
 
             #Configura o Render Settings
             SetRenderSettings(jobPass,settings)
@@ -197,8 +197,8 @@ def Cycles_DoAtlasBake(activeJob):
                     bpy.context.view_layer.objects.active = obj[0]
 
             # BAKE
-            if(settings.profile_type == "BAKETOOL"):
-                jobPass.type = SetupBakeToolPass(jobPass,settings)
+            if(settings.profile_type == "TEXTUREOVEN"):
+                jobPass.type = SetupTextureOvenPass(jobPass,settings)
 
             # BAKE!
             if settings.target == "":
@@ -318,7 +318,7 @@ def Cycles_DoIndividualBake(activeJob):
                     CreateImageNode(mat,tempImage)
 
                     # Seta a UV ativa
-                    SetBakeToolUV(objData)
+                    SetTextureOvenUV(objData)
 
                     #Configura o Render Settings
                     SetRenderSettings(jobPass,settings)
@@ -328,8 +328,8 @@ def Cycles_DoIndividualBake(activeJob):
 
                 # MODIFICADO AQUI, BAKE POR MATERIAL???
                 # BAKE
-                if(settings.profile_type == "BAKETOOL"):
-                    jobPass.type = SetupBakeToolPass(jobPass,settings)
+                if(settings.profile_type == "TEXTUREOVEN"):
+                    jobPass.type = SetupTextureOvenPass(jobPass,settings)
 
                 bpy.ops.object.bake(type=jobPass.type,
                                     use_clear=True,
@@ -359,7 +359,7 @@ def Cycles_DoIndividualBake(activeJob):
 
 def BakeCycles(context):
     print("-----------------------------START BAKE --------------------------------")
-    jobList = context.scene.BakeTool_Jobs.Jobs
+    jobList = context.scene.TextureOven_Jobs.Jobs
     jobList = [x for x in jobList if x.enabled == True]
 
     status = CheckBake(context,jobList)
@@ -368,22 +368,22 @@ def BakeCycles(context):
         return status
 
     # Informa ao report que iniciou o processo de bake
-    context.scene.BakeTool_Jobs.is_baking = True;
+    context.scene.TextureOven_Jobs.is_baking = True;
     MakeUVs(context,jobList)
 
     # Salva a cena atual
     bpy.ops.wm.save_mainfile()
 
     # Reseta Variaveis de Report
-    bpy.context.scene.BakeTool_ReportData.objCount = 0
-    bpy.context.scene.BakeTool_ReportData.objCurrent = 0
-    bpy.context.scene.BakeTool_ReportData.passCount = 0
-    bpy.context.scene.BakeTool_ReportData.passCurrent = 0
-    bpy.context.scene.BakeTool_ReportData.processCurrent = 0
+    bpy.context.scene.TextureOven_ReportData.objCount = 0
+    bpy.context.scene.TextureOven_ReportData.objCurrent = 0
+    bpy.context.scene.TextureOven_ReportData.passCount = 0
+    bpy.context.scene.TextureOven_ReportData.passCurrent = 0
+    bpy.context.scene.TextureOven_ReportData.processCurrent = 0
 
     # TODO Calcular o ProgressCount baseado na cena
     processCount = 0
-    bpy.context.scene.BakeTool_ReportData.jobCount = len(jobList)
+    bpy.context.scene.TextureOven_ReportData.jobCount = len(jobList)
 
     for activeJob in jobList:
         if(activeJob.job_settings.mode != "ATLAS"):
@@ -398,7 +398,7 @@ def BakeCycles(context):
             print(processCount);
             print("")
 
-    bpy.context.scene.BakeTool_ReportData.processCount = processCount
+    bpy.context.scene.TextureOven_ReportData.processCount = processCount
 
     # Inicializa o Json para essa sessão do Bake
     script_file = os.path.realpath(__file__)
@@ -425,7 +425,7 @@ def BakeCycles(context):
         json.dump(reports, file, indent=2)
 
     # Carrega a Interface
-    bpy.ops.baketool.report()
+    bpy.ops.textureoven.report()
 
     # Inicializa a Verificação de Progresso
     print("-----------------------------PROCESS JOB --------------------------------")
@@ -436,7 +436,7 @@ def ProcessBakeJobProgress():
 
     reports = LoadBakeReports()
     jobList = reports["jobs"]
-    bpy.context.scene.BakeTool_ReportData.processCurrent = int(reports["general"]["processCurrent"])
+    bpy.context.scene.TextureOven_ReportData.processCurrent = int(reports["general"]["processCurrent"])
 
     isProcessing = False
     for idx,job in enumerate(jobList):
@@ -444,14 +444,14 @@ def ProcessBakeJobProgress():
             isProcessing = True
 
         if(job["status"] == "Baking"):
-            bpy.context.scene.BakeTool_ReportData.objCount = int(job["objCount"])
-            bpy.context.scene.BakeTool_ReportData.objCurrent = int(job["objCurrent"])
-            bpy.context.scene.BakeTool_ReportData.passCount = int(job["passCount"])
-            bpy.context.scene.BakeTool_ReportData.passCurrent = int(job["passCurrent"])
+            bpy.context.scene.TextureOven_ReportData.objCount = int(job["objCount"])
+            bpy.context.scene.TextureOven_ReportData.objCurrent = int(job["objCurrent"])
+            bpy.context.scene.TextureOven_ReportData.passCount = int(job["passCount"])
+            bpy.context.scene.TextureOven_ReportData.passCurrent = int(job["passCurrent"])
 
         if(job["status"] == "Baked"):
-            #activeJob = bpy.context.scene.BakeTool_Jobs.Jobs[idx]
-            activeJob = bpy.context.scene.BakeTool_Jobs.Jobs[job["name"]]
+            #activeJob = bpy.context.scene.TextureOven_Jobs.Jobs[idx]
+            activeJob = bpy.context.scene.TextureOven_Jobs.Jobs[job["name"]]
             job["status"] = "Finished"
             SaveBakeReport(reports)
             PostBakeProcess(job,activeJob)
@@ -464,8 +464,8 @@ def ProcessBakeJobProgress():
             job["status"] = "Baking"
             SaveBakeReport(reports)
 
-            #activeJob = bpy.context.scene.BakeTool_Jobs.Jobs[idx]
-            activeJob = bpy.context.scene.BakeTool_Jobs.Jobs[job["name"]]
+            #activeJob = bpy.context.scene.TextureOven_Jobs.Jobs[idx]
+            activeJob = bpy.context.scene.TextureOven_Jobs.Jobs[job["name"]]
 
             filepath = bpy.data.filepath
 
@@ -477,7 +477,7 @@ def ProcessBakeJobProgress():
                                         "--background",
                                         filepath,
                                         "--python-expr",
-                                        'import bpy;p=bpy.ops.baketool.bakeindividual(job ="'  + activeJob.name + '");'],
+                                        'import bpy;p=bpy.ops.textureoven.bakeindividual(job ="'  + activeJob.name + '");'],
                                         shell=False)
 
             else:
@@ -487,15 +487,15 @@ def ProcessBakeJobProgress():
                                         "--background",
                                         filepath,
                                         "--python-expr",
-                                        'import bpy;p=bpy.ops.baketool.bakeatlas(job ="'  + activeJob.name + '");'],
+                                        'import bpy;p=bpy.ops.textureoven.bakeatlas(job ="'  + activeJob.name + '");'],
                                         shell=False)
 
-            bpy.context.scene.BakeTool_ReportData.current_processPid = int(process.pid)
-            bpy.context.scene.BakeTool_ReportData.jobCurrent = int(idx) + 1
+            bpy.context.scene.TextureOven_ReportData.current_processPid = int(process.pid)
+            bpy.context.scene.TextureOven_ReportData.jobCurrent = int(idx) + 1
 
     if(not isProcessing):
         bpy.app.timers.unregister(ProcessBakeJobProgress)
-        bpy.context.scene.BakeTool_Jobs.is_baking = False;
+        bpy.context.scene.TextureOven_Jobs.is_baking = False;
 
     return 0.1
 

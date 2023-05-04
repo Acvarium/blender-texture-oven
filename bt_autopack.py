@@ -1,4 +1,4 @@
-# Copyright (C) Cogumelo Softworks - BakeTool v1.41
+# Copyright (C) Cogumelo Softworks - TextureOven v1.41
 # License: http://www.gnu.org/licenses/gpl.html GPL version 3 or higher
 
 import bpy
@@ -18,7 +18,7 @@ def DoUnwrapper(objName,context,margin,angle,job):
     obj.select_set(True)
 
     # Cria nova UV se necessário
-    uvName = "BAKETOOL_" + job
+    uvName = "TEXTUREOVEN_" + job
     hasUV = False
     for uvtemp in obj.data.uv_layers:
         if uvtemp.name == uvName:
@@ -27,7 +27,7 @@ def DoUnwrapper(objName,context,margin,angle,job):
             obj.data.uv_layers.active = uv
             break
     if not hasUV:
-        uv = obj.data.uv_layers.new(name  = "BAKETOOL_" + job )
+        uv = obj.data.uv_layers.new(name  = "TEXTUREOVEN_" + job )
         obj.data.uv_layers.active = uv
 
     final_name = uv.name

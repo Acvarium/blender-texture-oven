@@ -14,15 +14,15 @@ else:
 import bpy
 import os
 
-class BakeToolReports(guic.GUIOperator):
+class TextureOvenReports(guic.GUIOperator):
 
-    bl_idname = "baketool.report"
-    bl_label = "BakeTool Reports"
-    bl_description = "BakeTool Reports"
+    bl_idname = "textureoven.report"
+    bl_label = "TextureOven Reports"
+    bl_description = "TextureOven Reports"
     bl_options = {'REGISTER'}
 
     def execute(self,context):
-        bpy.context.scene.BakeTool_Jobs.is_baking = True;
+        bpy.context.scene.TextureOven_Jobs.is_baking = True;
         return self.invoke(context, None)
 
     def LoadBakeReports():
@@ -38,7 +38,7 @@ class BakeToolReports(guic.GUIOperator):
 
     def checkProgress(self):
         try:
-            if(bpy.context.scene.BakeTool_Jobs.is_baking == False):
+            if(bpy.context.scene.TextureOven_Jobs.is_baking == False):
                 self.finish()
                 self.area = bpy.context.area
                 return
@@ -48,7 +48,7 @@ class BakeToolReports(guic.GUIOperator):
         except:
             return
 
-        data = bpy.context.scene.BakeTool_ReportData
+        data = bpy.context.scene.TextureOven_ReportData
 
 
         #self.panelAr2_Lb1.graph = "Baking Job: " +  str(data.jobCurrent) + "/" + str(data.jobCount)
@@ -116,7 +116,7 @@ class BakeToolReports(guic.GUIOperator):
 
     def AbortFunction(self,event):
         try:
-            pid = bpy.context.scene.BakeTool_ReportData.current_processPid
+            pid = bpy.context.scene.TextureOven_ReportData.current_processPid
             os.kill(pid, 9)
             print("------------------------------------ ABOOORT -----------------------------------")
             self.finish()
