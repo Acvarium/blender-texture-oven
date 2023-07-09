@@ -77,6 +77,34 @@ class TextureOven_MakeAtlas(bpy.types.Operator):
         lay.prop(self,"margin")
         lay.prop(self,"area_weight")
 
+
+
+class TextureOven_SwitchCycles(bpy.types.Operator):
+    bl_idname = "textureoven.switchtocycles"
+    bl_label = "Switch Render To Cycles"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        # The original script
+        context.scene.render.engine = 'CYCLES'
+        return {'FINISHED'}
+
+    def menu_func(self, context):
+        self.layout.operator(TextureOven_SwitchCycles.bl_idname)
+
+class TextureOven_SwitchEevee(bpy.types.Operator):
+    bl_idname = "textureoven.switchtoeevee"
+    bl_label = "Switch Render To EEVEE"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        # The original script
+        context.scene.render.engine = 'BLENDER_EEVEE'
+        return {'FINISHED'}
+
+    def menu_func(self, context):
+        self.layout.operator(TextureOven_SwitchEevee.bl_idname)
+
 # CYCLES BAKE -------------------------------------------------------------------------------------------------
 class TextureOven_CyclesBake(bpy.types.Operator):
     """ Bake this scene as config"""
@@ -482,7 +510,7 @@ def DuplicateJob(context,id):
         new_pass.use_pass_diffuse = active_pass.use_pass_diffuse
         new_pass.use_pass_glossy = active_pass.use_pass_glossy
         new_pass.use_pass_transmission = active_pass.use_pass_transmission
-        new_pass.use_pass_ambient_occlusion = active_pass.use_pass_ambient_occlusion
+        # new_pass.use_pass_ambient_occlusion = active_pass.use_pass_ambient_occlusion
         new_pass.use_pass_emit = active_pass.use_pass_emit
         new_pass.use_pass_color = active_pass.use_pass_color
         new_pass.use_pass_direct = active_pass.use_pass_direct
@@ -527,6 +555,9 @@ class TextureOven_DuplicateJob(bpy.types.Operator):
     def execute(self, context):
         DuplicateJob(context,self.id)
         return {'FINISHED'}
+
+
+
 
 class TextureOven_RemoveJob(bpy.types.Operator):
     """Remove this pass of the list"""
@@ -909,17 +940,23 @@ class TEXTUREOVEN_PT_ObjList(bpy.types.Panel):
 
 class TEXTUREOVEN_PT_Panel(bpy.types.Panel):
     """Main panel with bake properties for Bake Tool"""
-    bl_label = "TextureOven 2.5.3"
+    bl_label = "TextureOven 2.5.4"
     bl_idname = "TEXTUREOVEN_PT_Panel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "TextureOven"
 
     def draw(self,context):
+        layout = self.layout
         if bpy.context.scene.render.engine != "CYCLES":
-            layout = self.layout
+            layout.operator(TextureOven_SwitchCycles.bl_idname, icon = "BLENDER", text = "Switch To Cycles")
+        if bpy.context.scene.render.engine != "BLENDER_EEVEE":
+            layout.operator(TextureOven_SwitchEevee.bl_idname, icon = "BLENDER", text = "Switch To Eevee")
+
+        if bpy.context.scene.render.engine != "CYCLES":
             layout.label(text="Select CYCLES RENDER",icon="ERROR")
             return
+        layout.separator()
 
         layout = self.layout
 
@@ -973,7 +1010,11 @@ class TextureOven_MT_Menu(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator("textureoven.make_atlas")
+        if bpy.context.scene.render.engine != "CYCLES":
+            layout.operator(TextureOven_SwitchCycles.bl_idname, icon = "BLENDER", text = "Switch To Cycles")
+        if bpy.context.scene.render.engine != "BLENDER_EEVEE":
+            layout.operator(TextureOven_SwitchEevee.bl_idname, icon = "BLENDER", text = "Switch To Eevee")
+        layout.operator(TextureOven_CyclesBake.bl_idname, icon= "RENDER_STILL", text = "BAKE")
 
 def VIEW3D_TextureOven_MT_Menu(self, context):
     self.layout.menu(TextureOven_MT_Menu.bl_idname)
@@ -1039,8 +1080,12 @@ def register():
     bpy.app.handlers.load_post.append(loadPost)
     bpy.types.VIEW3D_MT_object.append(VIEW3D_TextureOven_MT_Menu)
 
-def unregister():
+    bpy.utils.register_class(TextureOven_SwitchCycles)
+    bpy.types.VIEW3D_MT_view.append(TextureOven_SwitchCycles.menu_func)
+    bpy.utils.register_class(TextureOven_SwitchEevee)
+    bpy.types.VIEW3D_MT_view.append(TextureOven_SwitchEevee.menu_func)
 
+def unregister():
     bpy.types.VIEW3D_MT_object.remove(VIEW3D_TextureOven_MT_Menu)
 
     from bpy.utils import unregister_class
@@ -1048,3 +1093,8 @@ def unregister():
         unregister_class(c)
 
     bpy.app.handlers.load_post.remove(loadPost)
+
+    bpy.utils.unregister_class(TextureOven_SwitchCycles)
+    bpy.utils.unregister_class(TextureOven_SwitchEevee)
+    bpy.types.VIEW3D_MT_object.remove(TextureOven_SwitchCycles.menu_func)
+    bpy.types.VIEW3D_MT_object.remove(TextureOven_SwitchEevee.menu_func)
