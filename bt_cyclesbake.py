@@ -368,7 +368,7 @@ def BakeCycles(context):
         return status
 
     # Informa ao report que iniciou o processo de bake
-    context.scene.TextureOven_Jobs.is_baking = True;
+    context.scene.TextureOven_ReportData.is_baking = True;
     MakeUVs(context,jobList)
 
     # Salva a cena atual
@@ -425,7 +425,7 @@ def BakeCycles(context):
         json.dump(reports, file, indent=2)
 
     # Carrega a Interface
-    bpy.ops.textureoven.report()
+    # bpy.ops.textureoven.report()
 
     # Inicializa a Verificação de Progresso
     print("-----------------------------PROCESS JOB --------------------------------")
@@ -433,7 +433,6 @@ def BakeCycles(context):
     return status
 
 def ProcessBakeJobProgress():
-
     reports = LoadBakeReports()
     jobList = reports["jobs"]
     bpy.context.scene.TextureOven_ReportData.processCurrent = int(reports["general"]["processCurrent"])
@@ -494,11 +493,24 @@ def ProcessBakeJobProgress():
             bpy.context.scene.TextureOven_ReportData.jobCurrent = int(idx) + 1
 
     if(not isProcessing):
-        bpy.app.timers.unregister(ProcessBakeJobProgress)
-        bpy.context.scene.TextureOven_Jobs.is_baking = False;
+        FinishBake()
 
+    RedrawScreen()
     return 0.1
 
+def RedrawScreen():
+    """ run tag_redraw for given area types """
+    screens = [bpy.context.screen] if bpy.context.screen else bpy.data.screens
+    for screen in screens:
+        for area in screen.areas:
+            if(area.type == "VIEW_3D"):
+                area.tag_redraw()
+
+def FinishBake():
+    bpy.app.timers.unregister(ProcessBakeJobProgress)
+    bpy.context.scene.TextureOven_ReportData.is_baking = False
+
+ 
 def PostBakeProcess(reportJob,activeJob):
     print("----------------- APPLY POST PROCESS----------------------")
     # Import Images

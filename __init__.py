@@ -21,8 +21,8 @@
 bl_info = {
     "name": "TextureOven",
     "author": "Cogumelo Softworks, Vitalii Shmorhun",
-    "version": (2,5,4),
-    "blender": (3,0,0),
+    "version": (2,6,0),
+    "blender": (4,0,0),
     "location": "3DView > Render> TextureOven",
     "description": "Bake Organizer for Cycles",
     "wiki_url":  "",
@@ -36,12 +36,10 @@ if "bpy" in locals():
     importlib.reload(bt_autopack)
     importlib.reload(bt_utils)
     importlib.reload(bt_cyclesbake)
-    importlib.reload(bt_reports)
 else:
     from . import (bt_utils)
     from . import (bt_autopack)
     from . import (bt_cyclesbake)
-    from . import (bt_reports)
 
 import bpy
 import random
@@ -292,7 +290,6 @@ class TextureOven_JobSettings(bpy.types.PropertyGroup):
 
 class TextureOven_Jobs(bpy.types.PropertyGroup):
     Jobs : bpy.props.CollectionProperty(type=TextureOven_JobSettings)
-    is_baking : bpy.props.BoolProperty()
     status : bpy.props.StringProperty()
     index : bpy.props.IntProperty()
 
@@ -308,6 +305,7 @@ class TextureOven_ReportData(bpy.types.PropertyGroup):
     individualUVs : bpy.props.IntProperty()
     atlasUVs: bpy.props.IntProperty()
     current_processPid: bpy.props.IntProperty()
+    is_baking : bpy.props.BoolProperty()
 
 # INTERFCE ------------------------------------------------------------------------------------------------------
 class TEXTUREOVEN_UL_Joblist(bpy.types.UIList):
@@ -654,7 +652,7 @@ class TEXTUREOVEN_PT_UV(bpy.types.Panel):
 
     @classmethod
     def poll(cls,context):
-        if bpy.context.scene.render.engine == "CYCLES":
+        if bpy.context.scene.render.engine == "CYCLES" and not bpy.context.scene.TextureOven_ReportData.is_baking:
             try:
                 Job = bpy.context.scene.TextureOven_Jobs
                 ActiveJob = Job.Jobs[Job.index]
@@ -703,7 +701,7 @@ class TEXTUREOVEN_PT_PostRender(bpy.types.Panel):
 
     @classmethod
     def poll(cls,context):
-        if bpy.context.scene.render.engine == "CYCLES":
+        if bpy.context.scene.render.engine == "CYCLES" and not bpy.context.scene.TextureOven_ReportData.is_baking:
             try:
                 Job = bpy.context.scene.TextureOven_Jobs
                 ActiveJob = Job.Jobs[Job.index]
@@ -741,7 +739,7 @@ class TEXTUREOVEN_PT_PassList(bpy.types.Panel):
 
     @classmethod
     def poll(cls,context):
-        if bpy.context.scene.render.engine == "CYCLES":
+        if bpy.context.scene.render.engine == "CYCLES" and not bpy.context.scene.TextureOven_ReportData.is_baking:
             try:
                 Job = bpy.context.scene.TextureOven_Jobs
                 ActiveJob = Job.Jobs[Job.index]
@@ -866,7 +864,7 @@ class TEXTUREOVEN_PT_ObjList(bpy.types.Panel):
 
     @classmethod
     def poll(cls,context):
-        if bpy.context.scene.render.engine == "CYCLES":
+        if bpy.context.scene.render.engine == "CYCLES" and not bpy.context.scene.TextureOven_ReportData.is_baking:
             try:
                 Job = bpy.context.scene.TextureOven_Jobs
                 ActiveJob = Job.Jobs[Job.index]
@@ -937,72 +935,111 @@ class TEXTUREOVEN_PT_ObjList(bpy.types.Panel):
 
                 else:
                     layout.label(text= "WARNING: Select a Mesh Object")
+class TEXTUREOVEN_OP_Abort(bpy.types.Operator):
+    """ Bake this scene as config"""
+    bl_idname = "textureoven.abort"
+    bl_label = "TextureOven Abort"
+
+    @classmethod
+    def poll(cls,context):
+        return True
+
+    def execute(self,context):
+        try:
+            pid = bpy.context.scene.TextureOven_ReportData.current_processPid
+            os.kill(pid, 9)
+            bt_cyclesbake.FinishBake()
+            print("===================================")
+            print("TextureOven ABORTED")
+            print("===================================")
+        except:
+            pass
+        return {'FINISHED'}
 
 class TEXTUREOVEN_PT_Panel(bpy.types.Panel):
     """Main panel with bake properties for Bake Tool"""
-    bl_label = "TextureOven 2.5.4"
+    bl_label = "TextureOven 2.6.0"
     bl_idname = "TEXTUREOVEN_PT_Panel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "TextureOven"
 
     def draw(self,context):
-        layout = self.layout
-        if bpy.context.scene.render.engine != "CYCLES":
-            layout.operator(TextureOven_SwitchCycles.bl_idname, icon = "BLENDER", text = "Switch To Cycles")
-        if bpy.context.scene.render.engine != "BLENDER_EEVEE":
-            layout.operator(TextureOven_SwitchEevee.bl_idname, icon = "BLENDER", text = "Switch To Eevee")
 
-        if bpy.context.scene.render.engine != "CYCLES":
-            layout.label(text="Select CYCLES RENDER",icon="ERROR")
-            return
-        layout.separator()
+        # Draw Bake Progress Screen
+        reportData = bpy.context.scene.TextureOven_ReportData
 
         layout = self.layout
+        layout.use_property_split = True
+        if(bpy.context.scene.TextureOven_ReportData.is_baking == True):
+            rendered_message = "Baked " + str(bpy.context.scene.TextureOven_ReportData.processCurrent) + \
+                " out of " + str(bpy.context.scene.TextureOven_ReportData.processCount)
+            layout.label(text=rendered_message)
 
-        layout = self.layout
-        layout.use_property_split = True # Active single-column layout
-
-        Mode = bpy.context.scene.render.engine
-        Job = bpy.context.scene.TextureOven_Jobs
-
-        row = layout.row()
-        row.scale_y = 2
-        row.operator(TextureOven_CyclesBake.bl_idname, icon= "RENDER_STILL", text = "BAKE")
-        layout.separator()
-        layout.label(text = "Jobs Settings:", icon = "WINDOW")
-        col = layout.row(align = True)
-        col.template_list("TEXTUREOVEN_UL_Joblist", "", Job, "Jobs", Job, "index",rows=2, type = "DEFAULT")
-        col = col.column(align = True)
-        col.operator(TextureOven_AddJob.bl_idname, text = "",icon = "ADD")
-        col.operator(TextureOven_RemoveJob.bl_idname, text ="", icon ="REMOVE")
-        col.operator(TextureOven_DuplicateJob.bl_idname, text ="", icon ="DUPLICATE")
-
-        # Job houver um job ativo
-        try:
-            ActiveJob = Job.Jobs[Job.index]
-        except:
-            return
-
-        # Job Settings
-        layout.separator()
-
-
-        #layout.prop(ActiveJob.job_settings, "keep", text = "Keep Textures in Blender")
-
-        layout.label(text = "Bake Settings:", icon = "TEXTURE")
-        layout.prop(ActiveJob.job_settings, "mode", text = "Bake Mode:",expand=True)
-        layout.prop(ActiveJob.job_settings,"profile_type", text="Profile Setup",toggle = True, icon = "LIGHT",expand=True)
-
-        layout.prop(ActiveJob.job_settings, "path", text = "Save Path")
-
-        if ActiveJob.job_settings.path != "":
-            layout.prop(ActiveJob.job_settings,"format")
-
-        userpref = bpy.context.preferences
-        if(not userpref.addons['cycles'].preferences.compute_device_type == "NONE"):
+            progress = 0
+            try:
+                progress = reportData.processCurrent/float(reportData.processCount)
+            except ZeroDivisionError:
+                pass
+            layout.progress(factor = progress, type = "BAR", text= "Progress" + " " + str(int(progress*100)) + "%")
             row = layout.row()
-            row.prop(ActiveJob.job_settings, "render_device", text="Render Device")
+            row.operator(TEXTUREOVEN_OP_Abort.bl_idname, icon = "CANCEL", text = "ABORT")
+        else:
+            if bpy.context.scene.render.engine != "CYCLES":
+                layout.operator(TextureOven_SwitchCycles.bl_idname, icon = "BLENDER", text = "Switch To Cycles")
+            if bpy.context.scene.render.engine != "BLENDER_EEVEE":
+                layout.operator(TextureOven_SwitchEevee.bl_idname, icon = "BLENDER", text = "Switch To Eevee")
+
+            if bpy.context.scene.render.engine != "CYCLES":
+                layout.label(text="Select CYCLES RENDER",icon="ERROR")
+                return
+            layout.separator()
+
+            layout = self.layout
+
+            layout = self.layout
+            layout.use_property_split = True # Active single-column layout
+
+            Mode = bpy.context.scene.render.engine
+            Job = bpy.context.scene.TextureOven_Jobs
+
+            row = layout.row()
+            row.scale_y = 2
+            row.operator(TextureOven_CyclesBake.bl_idname, icon= "RENDER_STILL", text = "BAKE")
+            layout.separator()
+            layout.label(text = "Jobs Settings:", icon = "WINDOW")
+            col = layout.row(align = True)
+            col.template_list("TEXTUREOVEN_UL_Joblist", "", Job, "Jobs", Job, "index",rows=2, type = "DEFAULT")
+            col = col.column(align = True)
+            col.operator(TextureOven_AddJob.bl_idname, text = "",icon = "ADD")
+            col.operator(TextureOven_RemoveJob.bl_idname, text ="", icon ="REMOVE")
+            col.operator(TextureOven_DuplicateJob.bl_idname, text ="", icon ="DUPLICATE")
+
+            # Job houver um job ativo
+            try:
+                ActiveJob = Job.Jobs[Job.index]
+            except:
+                return
+
+            # Job Settings
+            layout.separator()
+
+
+            #layout.prop(ActiveJob.job_settings, "keep", text = "Keep Textures in Blender")
+
+            layout.label(text = "Bake Settings:", icon = "TEXTURE")
+            layout.prop(ActiveJob.job_settings, "mode", text = "Bake Mode:",expand=True)
+            layout.prop(ActiveJob.job_settings,"profile_type", text="Profile Setup",toggle = True, icon = "LIGHT",expand=True)
+
+            layout.prop(ActiveJob.job_settings, "path", text = "Save Path")
+
+            if ActiveJob.job_settings.path != "":
+                layout.prop(ActiveJob.job_settings,"format")
+
+            userpref = bpy.context.preferences
+            if(not userpref.addons['cycles'].preferences.compute_device_type == "NONE"):
+                row = layout.row()
+                row.prop(ActiveJob.job_settings, "render_device", text="Render Device")
 
 class TextureOven_MT_Menu(bpy.types.Menu):
     bl_label = "TextureOven Operators"
@@ -1046,6 +1083,7 @@ classes = (
     TextureOven_DuplicateJob,
     TextureOven_SelectObjFromScene,
     TextureOven_CyclesBake,
+    TEXTUREOVEN_OP_Abort,
 
     TextureOven_MT_Menu,
     TEXTUREOVEN_PT_Panel,
@@ -1057,13 +1095,12 @@ classes = (
     TextureOven_MakeAtlas,
     bt_cyclesbake.BakeIndividual,
     bt_cyclesbake.BakeAtlas,
-    bt_reports.TextureOvenReports,
     #bt_error_reports.TextureOvenErrorReports
 )
 
 @bpy.app.handlers.persistent
 def loadPost(scene):
-    bpy.context.scene.TextureOven_Jobs.is_baking = False
+    bpy.context.scene.TextureOven_ReportData.is_baking = False
 
 def register():
 

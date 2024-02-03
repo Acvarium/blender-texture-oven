@@ -424,12 +424,12 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
                 principled = originalOut.inputs[0].links[0].from_node
                 if(principled.type == "BSDF_PRINCIPLED"):
                     # Get specular value or texture and connect to the new output
-                    if(principled.inputs[7].is_linked):
-                        texture = principled.inputs[7].links[0].from_socket
+                    if(principled.inputs[12].is_linked):
+                        texture = principled.inputs[12].links[0].from_socket
                         mat.node_tree.links.new(texture, nodeOut.inputs[0])
                     else:
                         nodeValue = node_tree.nodes.new('ShaderNodeValue')
-                        nodeValue.outputs[0].default_value = principled.inputs[7].default_value
+                        nodeValue.outputs[0].default_value = principled.inputs[12].default_value
                         mat.node_tree.links.new(nodeValue.outputs[0], nodeOut.inputs[0])
                     SetActiveNode(node_tree,nodeOut)
             except:
@@ -456,12 +456,12 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
                 principled = originalOut.inputs[0].links[0].from_node
                 if(principled.type == "BSDF_PRINCIPLED"):
                     # Get metallic value or texture and connect to the new output
-                    if(principled.inputs[10].is_linked):
-                        texture = principled.inputs[10].links[0].from_socket
+                    if(principled.inputs[1].is_linked):
+                        texture = principled.inputs[1].links[0].from_socket
                         mat.node_tree.links.new(texture, nodeOut.inputs[0])
                     else:
                         nodeValue = node_tree.nodes.new('ShaderNodeValue')
-                        nodeValue.outputs[0].default_value = principled.inputs[10].default_value
+                        nodeValue.outputs[0].default_value = principled.inputs[1].default_value
                         mat.node_tree.links.new(nodeValue.outputs[0], nodeOut.inputs[0])
                     SetActiveNode(node_tree,nodeOut)
             except:
@@ -477,7 +477,7 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
                     data_to.node_groups = data_from.node_groups
 
                 group = node_tree.nodes.new("ShaderNodeGroup")
-                group.node_tree = bpy.data.node_groups['BKTOOL_ID']
+                group.node_tree = bpy.data.node_groups['TO_ID']
                 mat.node_tree.links.new(group.outputs[0], nodeOut.inputs[0])
                 SetActiveNode(node_tree,nodeOut)
             except:
