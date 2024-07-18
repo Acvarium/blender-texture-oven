@@ -97,7 +97,7 @@ class TextureOven_SwitchEevee(bpy.types.Operator):
 
     def execute(self, context):
         # The original script
-        context.scene.render.engine = 'BLENDER_EEVEE'
+        context.scene.render.engine = 'BLENDER_EEVEE_NEXT'
         return {'FINISHED'}
 
     def menu_func(self, context):
@@ -987,7 +987,7 @@ class TEXTUREOVEN_PT_Panel(bpy.types.Panel):
         else:
             if bpy.context.scene.render.engine != "CYCLES":
                 layout.operator(TextureOven_SwitchCycles.bl_idname, icon = "BLENDER", text = "Switch To Cycles")
-            if bpy.context.scene.render.engine != "BLENDER_EEVEE":
+            if bpy.context.scene.render.engine != "BLENDER_EEVEE_NEXT":
                 layout.operator(TextureOven_SwitchEevee.bl_idname, icon = "BLENDER", text = "Switch To Eevee")
 
             if bpy.context.scene.render.engine != "CYCLES":
@@ -1049,7 +1049,7 @@ class TextureOven_MT_Menu(bpy.types.Menu):
         layout = self.layout
         if bpy.context.scene.render.engine != "CYCLES":
             layout.operator(TextureOven_SwitchCycles.bl_idname, icon = "BLENDER", text = "Switch To Cycles")
-        if bpy.context.scene.render.engine != "BLENDER_EEVEE":
+        if bpy.context.scene.render.engine != "BLENDER_EEVEE_NEXT":
             layout.operator(TextureOven_SwitchEevee.bl_idname, icon = "BLENDER", text = "Switch To Eevee")
         layout.operator(TextureOven_CyclesBake.bl_idname, icon= "RENDER_STILL", text = "BAKE")
 
