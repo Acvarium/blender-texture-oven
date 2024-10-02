@@ -399,7 +399,7 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
     else:
         originalOut = GetActiveNode(node_tree.nodes)
     bprincipled = originalOut.inputs[0].links[0].from_node
-    print(bprincipled.inputs[10].default_value)
+    # print(bprincipled.inputs[10].default_value)
     
     nodeOut = node_tree.nodes.new('ShaderNodeOutputMaterial')
 
