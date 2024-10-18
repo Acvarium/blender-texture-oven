@@ -97,7 +97,10 @@ class TextureOven_SwitchEevee(bpy.types.Operator):
 
     def execute(self, context):
         # The original script
-        context.scene.render.engine = 'BLENDER_EEVEE_NEXT'
+        try:
+            context.scene.render.engine = 'BLENDER_EEVEE_NEXT'
+        except:
+            context.scene.render.engine = 'BLENDER_EEVEE'
         return {'FINISHED'}
 
     def menu_func(self, context):
