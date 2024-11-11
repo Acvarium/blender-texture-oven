@@ -350,8 +350,6 @@ def AddObjList(context):
             if not inList:
                 item = ActiveJob.job_objs.coll.add()
                 item.name = actObj.name
-                # Tenta adicionar a UV ativa se houver
-                print(actObj.data.uv_layers.active.name)
                 try:
                     item.uv = actObj.data.uv_layers.active.name
                 except:
