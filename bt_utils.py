@@ -464,6 +464,7 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
                         nodeValue.outputs[0].default_value = principled.inputs[1].default_value
                         mat.node_tree.links.new(nodeValue.outputs[0], nodeOut.inputs[0])
                     SetActiveNode(node_tree,nodeOut)
+                    
             except:
                 pass
 

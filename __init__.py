@@ -97,7 +97,11 @@ class TextureOven_SwitchEevee(bpy.types.Operator):
 
     def execute(self, context):
         # The original script
-        context.scene.render.engine = 'BLENDER_EEVEE'
+        blender_version = bpy.app.version
+        if blender_version[0] >= 4 and blender_version[1] > 1:
+            context.scene.render.engine = 'BLENDER_EEVEE_NEXT'
+        else:
+            context.scene.render.engine = 'BLENDER_EEVEE'
         return {'FINISHED'}
 
     def menu_func(self, context):
