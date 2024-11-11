@@ -21,8 +21,8 @@
 bl_info = {
     "name": "TextureOven",
     "author": "Cogumelo Softworks, Vitalii Shmorhun",
-    "version": (2,6,0),
-    "blender": (4,0,0),
+    "version": (2,7,0),
+    "blender": (4,1,0),
     "location": "3DView > Render> TextureOven",
     "description": "Bake Organizer for Cycles",
     "wiki_url":  "",
@@ -388,7 +388,7 @@ def SelectFromScene(context,single):
         for idx,_obj in enumerate(ObjList.coll):
             for ob in bpy.context.scene.objects:
                 if ob.name == _obj.name:
-                    ob.select = True
+                    ob.select_set(True)
 
 def ActiveToTarget(context):
     Job = bpy.context.scene.TextureOven_Jobs
@@ -960,7 +960,7 @@ class TEXTUREOVEN_OP_Abort(bpy.types.Operator):
 
 class TEXTUREOVEN_PT_Panel(bpy.types.Panel):
     """Main panel with bake properties for Bake Tool"""
-    bl_label = "TextureOven 2.6.0"
+    bl_label = "TextureOven 2.7.0"
     bl_idname = "TEXTUREOVEN_PT_Panel"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
