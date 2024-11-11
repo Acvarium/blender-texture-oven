@@ -399,23 +399,22 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
     else:
         originalOut = GetActiveNode(node_tree.nodes)
     bprincipled = originalOut.inputs[0].links[0].from_node
-    print(bprincipled.inputs[10].default_value)
     
     nodeOut = node_tree.nodes.new('ShaderNodeOutputMaterial')
 
     if(settings.profile_type != "BLENDER"):
-        #fix the issue, that metallic value darken the diffuse
         if(jobPass.type_simple == "ALBEDO"):
+            print("ALBEDO__________________")
             try:
                 principled = originalOut.inputs[0].links[0].from_node
                 if(principled.type == "BSDF_PRINCIPLED"):
-                    if(principled.inputs[6].is_linked):
-                        link = principled.inputs[6].links[0]
-                        node_tree.links.new(link.from_socket, principled.inputs[10])
+                    if(principled.inputs[1].is_linked):         #Metalic
+                        link = principled.inputs[1].links[0]    #Metalic
+                        node_tree.links.new(link.from_socket, principled.inputs[14])
                         node_tree.links.remove(link)
-                    if (principled.inputs[6].default_value > 0.0):
-                        principled.inputs[10].default_value = principled.inputs[6].default_value 
-                    principled.inputs[6].default_value = 0.0
+                    if (principled.inputs[1].default_value > 0.0):   #Metalic
+                        principled.inputs[14].default_value = principled.inputs[1].default_value 
+                    principled.inputs[1].default_value = 0.0
             except:
                 pass
         if(jobPass.type_simple == "SPECULAR"):
@@ -424,12 +423,12 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
                 principled = originalOut.inputs[0].links[0].from_node
                 if(principled.type == "BSDF_PRINCIPLED"):
                     # Get specular value or texture and connect to the new output
-                    if(principled.inputs[12].is_linked):
-                        texture = principled.inputs[12].links[0].from_socket
+                    if(principled.inputs[13].is_linked):
+                        texture = principled.inputs[13].links[0].from_socket
                         mat.node_tree.links.new(texture, nodeOut.inputs[0])
                     else:
                         nodeValue = node_tree.nodes.new('ShaderNodeValue')
-                        nodeValue.outputs[0].default_value = principled.inputs[12].default_value
+                        nodeValue.outputs[0].default_value = principled.inputs[13].default_value
                         mat.node_tree.links.new(nodeValue.outputs[0], nodeOut.inputs[0])
                     SetActiveNode(node_tree,nodeOut)
             except:
@@ -451,12 +450,28 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
             except:
                 pass
         if(jobPass.type_simple == "METALLIC"):
+            
+            print("METALLIC__________________")
             try:
                 # Get current Principled
                 principled = originalOut.inputs[0].links[0].from_node
                 if(principled.type == "BSDF_PRINCIPLED"):
+                    # If there was an attempt to correct the effect of metalic on the albedo
+                    # Reverse the action and 
+
+                    # Connect input from 14 back to the metalic 
+                    if (principled.inputs[14].is_linked):
+                        link = principled.inputs[14].links[0]    #Metalic
+                        node_tree.links.new(link.from_socket, principled.inputs[1])
+
+                    # Set the value from input 14 back to the metalic input
+                    elif (principled.inputs[14].default_value > 0.0):
+                        principled.inputs[1].default_value = principled.inputs[14].default_value
+
+                
+                
                     # Get metallic value or texture and connect to the new output
-                    if(principled.inputs[1].is_linked):
+                    if (principled.inputs[1].is_linked):
                         texture = principled.inputs[1].links[0].from_socket
                         mat.node_tree.links.new(texture, nodeOut.inputs[0])
                     else:
@@ -537,7 +552,6 @@ def GetOutputByName(nodes,name):
 
 def SetRenderSettings(jobPass,jobSettings):
 
-    # Muda o Numero de Samples
     bpy.context.scene.cycles.samples = jobPass.samples
 
     # Configura o Device
