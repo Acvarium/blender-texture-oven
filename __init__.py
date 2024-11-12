@@ -207,7 +207,7 @@ class TextureOven_BakePass(bpy.types.PropertyGroup):
                             ("SUBSURFACE","Subsurface","",6),
                             ("SHADOWS","Shadows","",7),
                             ("ID","Id Map","",8),
-                            ("SPECULAR","Specular","",9),
+                            ("SPECULAR","Specular (Tint)","",9),
                             ("ALPHA","Alpha","",10)]
 
     sizetype = [                ("64","64","",1),

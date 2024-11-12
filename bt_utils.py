@@ -404,17 +404,16 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
 
     if(settings.profile_type != "BLENDER"):
         if(jobPass.type_simple == "ALBEDO"):
-            print("ALBEDO__________________")
             try:
                 principled = originalOut.inputs[0].links[0].from_node
                 if(principled.type == "BSDF_PRINCIPLED"):
-                    if(principled.inputs[1].is_linked):         #Metalic
-                        link = principled.inputs[1].links[0]    #Metalic
-                        node_tree.links.new(link.from_socket, principled.inputs[14])
+                    if(principled.inputs["Metallic"].is_linked):         #Metallic
+                        link = principled.inputs["Metallic"].links[0]    #Metallic
+                        node_tree.links.new(link.from_socket, principled.inputs["Anisotropic"])
                         node_tree.links.remove(link)
-                    if (principled.inputs[1].default_value > 0.0):   #Metalic
-                        principled.inputs[14].default_value = principled.inputs[1].default_value 
-                    principled.inputs[1].default_value = 0.0
+                    if (principled.inputs["Metallic"].default_value > 0.0):   #Metallic
+                        principled.inputs["Anisotropic"].default_value = principled.inputs["Metallic"].default_value 
+                    principled.inputs["Metallic"].default_value = 0.0
             except:
                 pass
         if(jobPass.type_simple == "SPECULAR"):
@@ -423,12 +422,12 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
                 principled = originalOut.inputs[0].links[0].from_node
                 if(principled.type == "BSDF_PRINCIPLED"):
                     # Get specular value or texture and connect to the new output
-                    if(principled.inputs[13].is_linked):
-                        texture = principled.inputs[13].links[0].from_socket
+                    if(principled.inputs["Specular Tint"].is_linked):
+                        texture = principled.inputs["Specular Tint"].links[0].from_socket
                         mat.node_tree.links.new(texture, nodeOut.inputs[0])
                     else:
                         nodeValue = node_tree.nodes.new('ShaderNodeValue')
-                        nodeValue.outputs[0].default_value = principled.inputs[13].default_value
+                        nodeValue.outputs[0].default_value = principled.inputs["Specular Tint"].default_value
                         mat.node_tree.links.new(nodeValue.outputs[0], nodeOut.inputs[0])
                     SetActiveNode(node_tree,nodeOut)
             except:
@@ -456,27 +455,27 @@ def SetCustomMaterial(obj,mat,jobPass,settings):
                 # Get current Principled
                 principled = originalOut.inputs[0].links[0].from_node
                 if(principled.type == "BSDF_PRINCIPLED"):
-                    # If there was an attempt to correct the effect of metalic on the albedo
+                    # If there was an attempt to correct the effect of metallic on the albedo
                     # Reverse the action and 
 
-                    # Connect input from 14 back to the metalic 
-                    if (principled.inputs[14].is_linked):
-                        link = principled.inputs[14].links[0]    #Metalic
-                        node_tree.links.new(link.from_socket, principled.inputs[1])
+                    # Connect input from Anisotropic back to the Metallic 
+                    if (principled.inputs["Anisotropic"].is_linked):
+                        link = principled.inputs["Anisotropic"].links[0]    #Metallic
+                        node_tree.links.new(link.from_socket, principled.inputs["Metallic"])
 
-                    # Set the value from input 14 back to the metalic input
-                    elif (principled.inputs[14].default_value > 0.0):
-                        principled.inputs[1].default_value = principled.inputs[14].default_value
+                    # Set the value from input Anisotropic back to the Metallic input
+                    elif (principled.inputs["Anisotropic"].default_value > 0.0):
+                        principled.inputs["Metallic"].default_value = principled.inputs["Anisotropic"].default_value
 
                 
                 
                     # Get metallic value or texture and connect to the new output
-                    if (principled.inputs[1].is_linked):
-                        texture = principled.inputs[1].links[0].from_socket
+                    if (principled.inputs["Metallic"].is_linked):
+                        texture = principled.inputs["Metallic"].links[0].from_socket
                         mat.node_tree.links.new(texture, nodeOut.inputs[0])
                     else:
                         nodeValue = node_tree.nodes.new('ShaderNodeValue')
-                        nodeValue.outputs[0].default_value = principled.inputs[1].default_value
+                        nodeValue.outputs[0].default_value = principled.inputs["Metallic"].default_value
                         mat.node_tree.links.new(nodeValue.outputs[0], nodeOut.inputs[0])
                     SetActiveNode(node_tree,nodeOut)
                     
