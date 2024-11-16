@@ -314,6 +314,7 @@ class TextureOven_ReportData(bpy.types.PropertyGroup):
 # INTERFCE ------------------------------------------------------------------------------------------------------
 class TEXTUREOVEN_UL_Joblist(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        layout.use_property_decorate = False
         row = layout.row(align = False)
         row.prop(item,"enabled", text = "")
         row.prop(item,"name", text = "", emboss = False, icon = "RENDERLAYERS")
@@ -322,8 +323,13 @@ class TEXTUREOVEN_UL_Joblist(bpy.types.UIList):
 # Pass LIST ----------------------------------
 class TEXTUREOVEN_UL_Passlist(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        layout.use_property_decorate = False
         row = layout.row(align=True)
         row.prop(item,"name", text = "", emboss= False, icon = "RENDERLAYERS")
+        check_icon = "CHECKBOX_HLT"
+        if (not item["enabled"]):
+            check_icon = "CHECKBOX_DEHLT"
+        row.prop(item, "enabled", text = "", icon = check_icon)
 
         Job = bpy.context.scene.TextureOven_Jobs
         ActiveJob = Job.Jobs[Job.index]
@@ -678,7 +684,7 @@ class TEXTUREOVEN_PT_UV(bpy.types.Panel):
         except:
             layout.label(text="Select a Job to start")
             return
-
+        layout.use_property_decorate = False
         layout.prop(ActiveJob.job_settings, "generate_uvwrap", text = "Generate Object UVs:")
         if(ActiveJob.job_settings.generate_uvwrap):
             layout.prop(ActiveJob.job_settings, "uvwrapper_margin", text = "Margin")
@@ -726,7 +732,7 @@ class TEXTUREOVEN_PT_PostRender(bpy.types.Panel):
         except:
             layout.label(text="Select a Job to start")
             return
-
+        layout.use_property_decorate = False
         layout.prop(ActiveJob.job_settings, "postbake_importImages", text = "Load Images")
         if ActiveJob.job_settings.mode != "ATLAS":
             layout.prop(ActiveJob.job_settings, "postbake_createEevee", text = "Create Eevee Scene")
@@ -756,7 +762,7 @@ class TEXTUREOVEN_PT_PassList(bpy.types.Panel):
         # Objects Setttings
         layout = self.layout
         layout.use_property_split = True # Active single-column layout
-
+        layout.use_property_decorate = False
         Mode = bpy.context.scene.render.engine
         Job = bpy.context.scene.TextureOven_Jobs
         try:
@@ -796,7 +802,7 @@ class TEXTUREOVEN_PT_PassList(bpy.types.Panel):
             row.prop(Pass,"margin",text="Margin")
 
             layout.separator()
-
+            layout.use_property_decorate = False
             row = layout.row(align = False)
 
             row.prop(Pass,"type", text = "Type")
@@ -891,7 +897,7 @@ class TEXTUREOVEN_PT_ObjList(bpy.types.Panel):
             layout.label(text="Required at least one Job")
             return
         ActiveJob.job_settings.mode == "ATLAS"
-
+        layout.use_property_decorate = False
         col = layout.row(align = True)
         col.template_list("TEXTUREOVEN_UL_ObjList", "", ActiveJob.job_objs, "coll", ActiveJob.job_objs, "index",rows=3, type = "DEFAULT")
         col = col.column(align = True)
@@ -1012,6 +1018,7 @@ class TEXTUREOVEN_PT_Panel(bpy.types.Panel):
             row.operator(TextureOven_CyclesBake.bl_idname, icon= "RENDER_STILL", text = "BAKE")
             layout.separator()
             layout.label(text = "Jobs Settings:", icon = "WINDOW")
+            layout.use_property_decorate = False
             col = layout.row(align = True)
             col.template_list("TEXTUREOVEN_UL_Joblist", "", Job, "Jobs", Job, "index",rows=2, type = "DEFAULT")
             col = col.column(align = True)
