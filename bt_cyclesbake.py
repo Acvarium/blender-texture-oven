@@ -393,9 +393,6 @@ def BakeCycles(context):
         else:
             passList = GetActivePasses(activeJob)
             processCount += len(passList)
-            print("")
-            print(processCount);
-            print("")
 
     bpy.context.scene.TextureOven_ReportData.processCount = processCount
 

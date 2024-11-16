@@ -315,7 +315,10 @@ class TextureOven_ReportData(bpy.types.PropertyGroup):
 class TEXTUREOVEN_UL_Joblist(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         layout.use_property_decorate = False
-        check_icon = "CHECKBOX_HLT" if (item["enabled"]) else "CHECKBOX_DEHLT" 
+
+        check_icon = "CHECKBOX_HLT" 
+        if ("enabled" in item.keys() and not item["enabled"]):
+            check_icon = "CHECKBOX_DEHLT" 
         row = layout.row(align = True)
         row.prop(item,"name", text = "", emboss = False, icon = "RENDERLAYERS")
         row.prop(item,"enabled", text = "", icon = check_icon)
@@ -983,11 +986,28 @@ class TEXTUREOVEN_PT_Panel(bpy.types.Panel):
 
         layout = self.layout
         layout.use_property_split = True
+
+    # processCount : bpy.props.IntProperty()
+    # processCurrent : bpy.props.IntProperty()
+    # jobCurrent : bpy.props.IntProperty()
+    # jobCount : bpy.props.IntProperty()
+    # objCount : bpy.props.IntProperty()
+    # objCurrent : bpy.props.IntProperty()
+    # passCount : bpy.props.IntProperty()
+    # passCurrent : bpy.props.IntProperty()
+    # individualUVs : bpy.props.IntProperty()
+    # atlasUVs: bpy.props.IntProperty()
+    # current_processPid: bpy.props.IntProperty()
+    # is_baking : bpy.props.BoolProperty()
+
         if(bpy.context.scene.TextureOven_ReportData.is_baking == True):
             rendered_message = "Baked " + str(bpy.context.scene.TextureOven_ReportData.processCurrent) + \
                 " out of " + str(bpy.context.scene.TextureOven_ReportData.processCount)
             layout.label(text=rendered_message)
 
+            test_message = "Job Current: " + str(bpy.context.scene.TextureOven_ReportData.passCount) + \
+                "Job Count: " + str(bpy.context.scene.TextureOven_ReportData.passCurrent)
+            layout.label(text=test_message)
             progress = 0
             progress_str = ""
             try:
@@ -1102,9 +1122,9 @@ classes = (
 
     TextureOven_MT_Menu,
     TEXTUREOVEN_PT_Panel,
+    TEXTUREOVEN_PT_PassList,
     TEXTUREOVEN_PT_UV,
     TEXTUREOVEN_PT_ObjList,
-    TEXTUREOVEN_PT_PassList,
     TEXTUREOVEN_PT_PostRender,
 
     TextureOven_MakeAtlas,
