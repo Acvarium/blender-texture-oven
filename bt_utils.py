@@ -62,6 +62,13 @@ def CheckEmptyMaterialSlots(ListObj):
     return (True,None)
 
 
+def CheckForNoMaterial(ListObj):
+    for item in ListObj:
+        obj = bpy.context.scene.objects[item.name]
+        if len(obj.data.materials) == 0:
+            return (False,obj)
+    return (True,None)
+
 
 def GetObjectListJob(activeJob,settings,isAtlas):
 
@@ -259,23 +266,28 @@ def CheckBake(context,jobList):
         objectList = activeJob.job_objs.coll
         if(len(objectList) == 0):
 
-            status = 'TEXTUREOVEN ABORTED: on the job: "' + activeJob.name + '" - No valid object to bake in Bake List'
+            status = 'ABORTED: on the job: "' + activeJob.name + '" - No valid object to bake in Bake List'
             return status
 
         # Verifica se existe um path válido para salvar as imagens
         if(not os.path.exists(bpy.path.abspath(activeJob.job_settings.path))):
-            status = "TEXTUREOVEN ABORTED: on the job: ''" + activeJob.name + ". save path do not exist"
+            status = 'ABORTED: on the job: "' + activeJob.name + '". save path do not exist'
             return status
 
         # Verifica se existem  objetos na lista e se todos os objetos da lista estão visíveis
-        checkstatus,objError = CheckVisible(objectList)
+        checkstatus, objError = CheckVisible(objectList)
         if(checkstatus == False):
-            status = "TEXTUREOVEN ABORTED: on the job: ''" + activeJob.name + "''. Object ''" + objError.name + "'' is not visible in the scene"
+            status = 'ABORTED: on the job: "' + activeJob.name + '". Object "' + objError.name + '" is not visible in the scene'
             return status
 
-        checkMatSlotStatus,objMatSlotError = CheckEmptyMaterialSlots(objectList)
+        checkNoMaterialsStatus, noMatError = CheckForNoMaterial(objectList)
+        if(checkNoMaterialsStatus == False):
+            status = 'ABORTED: on the job: "' + activeJob.name + '". Object "' + noMatError.name + '" has no materials'
+            return status
+        
+        checkMatSlotStatus, objMatSlotError = CheckEmptyMaterialSlots(objectList)
         if(checkMatSlotStatus == False):
-            status = "TEXTUREOVEN ABORTED: on the job: ''" + activeJob.name + "''. Object ''" + objMatSlotError.name + "'' has an emty metarial slot"
+            status = 'ABORTED: on the job: "' + activeJob.name + '". Object "' + objMatSlotError.name + '" has an empty metarial slot'
             return status
         
         #Seta Objeto Ativo para Objetct Mode se não estiver

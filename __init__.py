@@ -315,9 +315,10 @@ class TextureOven_ReportData(bpy.types.PropertyGroup):
 class TEXTUREOVEN_UL_Joblist(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         layout.use_property_decorate = False
-        row = layout.row(align = False)
-        row.prop(item,"enabled", text = "")
+        check_icon = "CHECKBOX_HLT" if (item["enabled"]) else "CHECKBOX_DEHLT" 
+        row = layout.row(align = True)
         row.prop(item,"name", text = "", emboss = False, icon = "RENDERLAYERS")
+        row.prop(item,"enabled", text = "", icon = check_icon)
 
 
 # Pass LIST ----------------------------------
@@ -326,9 +327,7 @@ class TEXTUREOVEN_UL_Passlist(bpy.types.UIList):
         layout.use_property_decorate = False
         row = layout.row(align=True)
         row.prop(item,"name", text = "", emboss= False, icon = "RENDERLAYERS")
-        check_icon = "CHECKBOX_HLT"
-        if (not item["enabled"]):
-            check_icon = "CHECKBOX_DEHLT"
+        check_icon = "CHECKBOX_HLT" if (item["enabled"]) else "CHECKBOX_DEHLT" 
         row.prop(item, "enabled", text = "", icon = check_icon)
 
         Job = bpy.context.scene.TextureOven_Jobs
@@ -434,6 +433,11 @@ class TextureOven_AddObj(bpy.types.Operator):
     bl_label = "Add Active Object to the List"
 
     def execute(self, context):
+        for actObj in context.selected_objects:
+            if actObj.type != "MESH":
+                self.report({"ERROR"}, "ABORT: Object " + actObj.name + " is not mesh")
+                return {'CANCELLED'}
+
         AddObjList(context)
         return {'FINISHED'}
 
