@@ -50,6 +50,19 @@ def CheckVisible(ListObj):
                 return (False,obj)
     return (True,None)
 
+
+#-----------------------------------------------------
+def CheckEmptyMaterialSlots(ListObj):
+    for item in ListObj:
+        obj = bpy.context.scene.objects[item.name]
+        for i in range(len(obj.data.materials)):
+            if obj.data.materials[i] == None:
+                print(item.name + " _________________________")
+                return (False,obj)
+    return (True,None)
+
+
+
 def GetObjectListJob(activeJob,settings,isAtlas):
 
     listObjects = []
@@ -260,6 +273,11 @@ def CheckBake(context,jobList):
             status = "TEXTUREOVEN ABORTED: on the job: ''" + activeJob.name + "''. Object ''" + objError.name + "'' is not visible in the scene"
             return status
 
+        checkMatSlotStatus,objMatSlotError = CheckEmptyMaterialSlots(objectList)
+        if(checkMatSlotStatus == False):
+            status = "TEXTUREOVEN ABORTED: on the job: ''" + activeJob.name + "''. Object ''" + objMatSlotError.name + "'' has an emty metarial slot"
+            return status
+        
         #Seta Objeto Ativo para Objetct Mode se não estiver
         try:
             bpy.ops.object.mode_set(mode="OBJECT")

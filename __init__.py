@@ -979,11 +979,13 @@ class TEXTUREOVEN_PT_Panel(bpy.types.Panel):
             layout.label(text=rendered_message)
 
             progress = 0
+            progress_str = ""
             try:
                 progress = reportData.processCurrent/float(reportData.processCount)
+                progress_str = str(reportData.processCurrent) + "/" + str(reportData.processCount)
             except ZeroDivisionError:
                 pass
-            layout.progress(factor = progress, type = "BAR", text= "Progress" + " " + str(int(progress*100)) + "%")
+            layout.progress(factor = progress, type = "BAR", text= progress_str)
             row = layout.row()
             row.operator(TEXTUREOVEN_OP_Abort.bl_idname, icon = "CANCEL", text = "ABORT")
         else:

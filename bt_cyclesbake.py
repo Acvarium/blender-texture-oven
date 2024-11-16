@@ -98,7 +98,6 @@ def Cycles_DoAtlasBake(activeJob):
                     print(mat)
 
                     AlreadyHandledMaterials.append(mat)
-
                     node_tree = mat.node_tree
                     for node in node_tree.nodes:
                         node.select = False
