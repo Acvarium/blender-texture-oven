@@ -78,19 +78,36 @@ class TextureOven_MakeAtlas(bpy.types.Operator):
 
 
 class TextureOven_SwitchCycles(bpy.types.Operator):
+    """Switch to CYCLES Render Engine"""
     bl_idname = "textureoven.switchtocycles"
     bl_label = "Switch Render To Cycles"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        # The original script
         context.scene.render.engine = 'CYCLES'
         return {'FINISHED'}
 
     def menu_func(self, context):
         self.layout.operator(TextureOven_SwitchCycles.bl_idname)
 
+
+class TextureOven_ReloadAllImages(bpy.types.Operator):
+    
+    bl_idname = "textureoven.reloadallimages"
+    bl_label = "Reload All Images"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        for image in bpy.data.images:
+            image.reload()
+        return {'FINISHED'}
+
+    def menu_func(self, context):
+        self.layout.operator(TextureOven_ReloadAllImages.bl_idname)
+
+
 class TextureOven_SwitchEevee(bpy.types.Operator):
+    """Switch to EEVEE Render Engine"""
     bl_idname = "textureoven.switchtoeevee"
     bl_label = "Switch Render To EEVEE"
     bl_options = {'REGISTER', 'UNDO'}
@@ -1019,10 +1036,13 @@ class TEXTUREOVEN_PT_Panel(bpy.types.Panel):
             row = layout.row()
             row.operator(TEXTUREOVEN_OP_Abort.bl_idname, icon = "CANCEL", text = "ABORT")
         else:
-            if bpy.context.scene.render.engine != "CYCLES":
+            if bpy.context.scene.render.engine == "BLENDER_EEVEE" or \
+                     bpy.context.scene.render.engine == "BLENDER_EEVEE_NEXT":
                 layout.operator(TextureOven_SwitchCycles.bl_idname, icon = "BLENDER", text = "Switch To Cycles")
-            if bpy.context.scene.render.engine != "BLENDER_EEVEE":
+            if bpy.context.scene.render.engine == "CYCLES":
                 layout.operator(TextureOven_SwitchEevee.bl_idname, icon = "BLENDER", text = "Switch To Eevee")
+
+            layout.operator(TextureOven_ReloadAllImages.bl_idname, icon = "FILE_REFRESH", text = "Reload All Images")
 
             if bpy.context.scene.render.engine != "CYCLES":
                 layout.label(text="Select CYCLES RENDER",icon="ERROR")
@@ -1082,11 +1102,14 @@ class TextureOven_MT_Menu(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        if bpy.context.scene.render.engine != "CYCLES":
+        if bpy.context.scene.render.engine == "BLENDER_EEVEE" or \
+                bpy.context.scene.render.engine == "BLENDER_EEVEE_NEXT":
             layout.operator(TextureOven_SwitchCycles.bl_idname, icon = "BLENDER", text = "Switch To Cycles")
-        if bpy.context.scene.render.engine != "BLENDER_EEVEE":
+        if bpy.context.scene.render.engine == "CYCLES":
             layout.operator(TextureOven_SwitchEevee.bl_idname, icon = "BLENDER", text = "Switch To Eevee")
         layout.operator(TextureOven_CyclesBake.bl_idname, icon= "RENDER_STILL", text = "BAKE")
+        layout.operator(TextureOven_ReloadAllImages.bl_idname, icon= "FILE_REFRESH", text = "Reload All Images")
+
 
 def VIEW3D_TextureOven_MT_Menu(self, context):
     self.layout.menu(TextureOven_MT_Menu.bl_idname)
@@ -1153,7 +1176,10 @@ def register():
     bpy.types.VIEW3D_MT_object.append(VIEW3D_TextureOven_MT_Menu)
 
     bpy.utils.register_class(TextureOven_SwitchCycles)
+    bpy.utils.register_class(TextureOven_ReloadAllImages)
+
     bpy.types.VIEW3D_MT_view.append(TextureOven_SwitchCycles.menu_func)
+    bpy.types.VIEW3D_MT_view.append(TextureOven_ReloadAllImages.menu_func)
     bpy.utils.register_class(TextureOven_SwitchEevee)
     bpy.types.VIEW3D_MT_view.append(TextureOven_SwitchEevee.menu_func)
 
@@ -1167,6 +1193,8 @@ def unregister():
     bpy.app.handlers.load_post.remove(loadPost)
 
     bpy.utils.unregister_class(TextureOven_SwitchCycles)
+    bpy.utils.unregister_class(TextureOven_ReloadAllImages)
     bpy.utils.unregister_class(TextureOven_SwitchEevee)
     bpy.types.VIEW3D_MT_object.remove(TextureOven_SwitchCycles.menu_func)
+    bpy.types.VIEW3D_MT_object.remove(TextureOven_ReloadAllImages.menu_func)
     bpy.types.VIEW3D_MT_object.remove(TextureOven_SwitchEevee.menu_func)
