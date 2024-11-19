@@ -77,20 +77,6 @@ class TextureOven_MakeAtlas(bpy.types.Operator):
 
 
 
-class TextureOven_SwitchCycles(bpy.types.Operator):
-    """Switch to CYCLES Render Engine"""
-    bl_idname = "textureoven.switchtocycles"
-    bl_label = "Switch Render To Cycles"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    def execute(self, context):
-        context.scene.render.engine = 'CYCLES'
-        return {'FINISHED'}
-
-    def menu_func(self, context):
-        self.layout.operator(TextureOven_SwitchCycles.bl_idname)
-
-
 class TextureOven_ReloadAllImages(bpy.types.Operator):
     
     bl_idname = "textureoven.reloadallimages"
@@ -102,8 +88,15 @@ class TextureOven_ReloadAllImages(bpy.types.Operator):
             image.reload()
         return {'FINISHED'}
 
-    def menu_func(self, context):
-        self.layout.operator(TextureOven_ReloadAllImages.bl_idname)
+class TextureOven_SwitchCycles(bpy.types.Operator):
+    """Switch to CYCLES Render Engine"""
+    bl_idname = "textureoven.switchtocycles"
+    bl_label = "Switch Render To Cycles"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        context.scene.render.engine = 'CYCLES'
+        return {'FINISHED'}
 
 
 class TextureOven_SwitchEevee(bpy.types.Operator):
@@ -121,8 +114,6 @@ class TextureOven_SwitchEevee(bpy.types.Operator):
             context.scene.render.engine = 'BLENDER_EEVEE'
         return {'FINISHED'}
 
-    def menu_func(self, context):
-        self.layout.operator(TextureOven_SwitchEevee.bl_idname)
 
 # CYCLES BAKE -------------------------------------------------------------------------------------------------
 class TextureOven_CyclesBake(bpy.types.Operator):
@@ -1177,11 +1168,8 @@ def register():
 
     bpy.utils.register_class(TextureOven_SwitchCycles)
     bpy.utils.register_class(TextureOven_ReloadAllImages)
-
-    bpy.types.VIEW3D_MT_view.append(TextureOven_SwitchCycles.menu_func)
-    bpy.types.VIEW3D_MT_view.append(TextureOven_ReloadAllImages.menu_func)
     bpy.utils.register_class(TextureOven_SwitchEevee)
-    bpy.types.VIEW3D_MT_view.append(TextureOven_SwitchEevee.menu_func)
+
 
 def unregister():
     bpy.types.VIEW3D_MT_object.remove(VIEW3D_TextureOven_MT_Menu)
@@ -1195,6 +1183,3 @@ def unregister():
     bpy.utils.unregister_class(TextureOven_SwitchCycles)
     bpy.utils.unregister_class(TextureOven_ReloadAllImages)
     bpy.utils.unregister_class(TextureOven_SwitchEevee)
-    bpy.types.VIEW3D_MT_object.remove(TextureOven_SwitchCycles.menu_func)
-    bpy.types.VIEW3D_MT_object.remove(TextureOven_ReloadAllImages.menu_func)
-    bpy.types.VIEW3D_MT_object.remove(TextureOven_SwitchEevee.menu_func)
