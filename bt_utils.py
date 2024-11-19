@@ -51,13 +51,49 @@ def CheckVisible(ListObj):
     return (True,None)
 
 
+def CheckRenderVisible(ListObj):
+    for item in ListObj:
+        obj = bpy.context.scene.objects[item.name]
+        renderVis = IsObjRenderVisible(obj)
+        if not IsObjRenderVisible(obj):
+            return (False,obj)
+    return (True,None)
+
+
+def is_collection_render_visible(collection):
+    """Recursively check if a collection and its parent collections are visible in the render."""
+    # If this collection is hidden in render, return False
+    if collection.hide_render:
+        return False
+
+    # Traverse parent collections in the scene hierarchy
+    for parent_collection in bpy.data.collections:
+        if collection.name in [child.name for child in parent_collection.children]:
+            # Check the parent collection's visibility
+            return is_collection_render_visible(parent_collection)
+    
+    return True  # No parent is hidden, so the collection is visible
+
+
+def IsObjRenderVisible(obj):
+    """Check if an object and its collections are visible in the render."""
+    # Check the object's render visibility
+    if obj.hide_render:
+        return False
+
+    # Check all collections the object belongs to
+    for collection in obj.users_collection:
+        if not is_collection_render_visible(collection):
+            return False
+
+    return True
+
 #-----------------------------------------------------
 def CheckEmptyMaterialSlots(ListObj):
     for item in ListObj:
         obj = bpy.context.scene.objects[item.name]
         for i in range(len(obj.data.materials)):
             if obj.data.materials[i] == None:
-                print(item.name + " _________________________")
                 return (False,obj)
     return (True,None)
 
@@ -263,9 +299,25 @@ def CheckBake(context,jobList):
         if not activeJob.enabled:
             continue
 
-        objectList = activeJob.job_objs.coll
-        if(len(objectList) == 0):
+        if activeJob.job_settings.mode == "ATLAS":
+            if activeJob.job_settings.target == "":
+                status = 'ABORTED: on the job: "' + activeJob.name + '". No target object assigned'
+                return status
+            if not activeJob.job_settings.target in bpy.data.objects.keys():
+                status = 'ABORTED: on the job: "' + activeJob.name + '". Target object does not exist'
+                return status
+            target_obj = bpy.context.scene.objects[activeJob.job_settings.target]
+            if target_obj not in bpy.context.visible_objects:
+                status = 'ABORTED: on the job: "' + activeJob.name + '". Target object is not visible'
+                return status
+            if not IsObjRenderVisible(target_obj):
+                status = 'ABORTED: on the job: "' + activeJob.name + '". Target object is not visible in render'
+                return status
 
+
+        objectList = activeJob.job_objs.coll
+
+        if(len(objectList) == 0):
             status = 'ABORTED: on the job: "' + activeJob.name + '" - No valid object to bake in Bake List'
             return status
 
@@ -278,6 +330,11 @@ def CheckBake(context,jobList):
         checkstatus, objError = CheckVisible(objectList)
         if(checkstatus == False):
             status = 'ABORTED: on the job: "' + activeJob.name + '". Object "' + objError.name + '" is not visible in the scene'
+            return status
+
+        checkRenderVisStatus, objRenderVisError = CheckRenderVisible(objectList)
+        if(checkRenderVisStatus == False):
+            status = 'ABORTED: on the job: "' + activeJob.name + '". Object "' + objRenderVisError.name + '" is not visible in render'
             return status
 
         checkNoMaterialsStatus, noMatError = CheckForNoMaterial(objectList)
