@@ -261,6 +261,9 @@ class TextureOven_BakePass(bpy.types.PropertyGroup):
     # Cycles Denoise
     use_denoising : bpy.props.BoolProperty(default = True)
 
+    square_render : bpy.props.BoolProperty(default = True)
+
+
     # Normal properties
     normal_space_cycles_enum = [("TANGENT","Tangent","",1),("OBJECT","Object","",2)]
     normal_space_bi_enum = [("CAMERA","Camera","",1),("WORLD","World","",2),("OBJECT","Object","",2),("TANGENT","Tangent","",4)]
@@ -279,10 +282,9 @@ class TextureOven_BakePass(bpy.types.PropertyGroup):
     enabled : bpy.props.BoolProperty()
 
     size : bpy.props.EnumProperty(name="Size",default = "1024", items = sizetype,description="The texture size to bake")
-    '''
-    size_x : bpy.props.IntProperty(default = 512, min = 16,description="The width value, square values are recomended")
-    size_y : bpy.props.IntProperty(default = 512, min = 16,description="The height value, square values are recomended")
-    '''
+    y_size : bpy.props.EnumProperty(name="Size",default = "1024", items = sizetype,description="The vertical texture size to bake")
+    
+   
     margin : bpy.props.IntProperty(default = 32 ,description="Pixel bledding beyond the islands, values > 0 <  12 are recomended")
     custom_output : bpy.props.StringProperty(description = "Try to find the output node with this name and assign it to bake on this pass")
     aliasing : bpy.props.EnumProperty(name="Aliasing",default = "None", items = aliasing_type,description="Use SuperSampler Aliasing")
@@ -806,7 +808,15 @@ class TEXTUREOVEN_PT_PassList(bpy.types.Panel):
         row = layout.column(align = True)
         row.prop(Pass,"use_denoising",text="Use Denoise")
         row.prop(Pass,"enabled",text="Enabled")
-        row.prop(Pass,"size",text="Resolution")
+        
+        row.prop(Pass,"square_render",text="Square Image")
+            
+        if Pass.square_render:
+            row.prop(Pass,"size",text="Resolution")
+        else:
+            row.prop(Pass,"size",text="H Resolution")
+            row.prop(Pass,"y_size",text="V Resolution")
+
         row.prop(Pass,"aliasing",text="AA")
         row.prop(Pass,"margin",text="Margin")
         row.prop(Pass,"colors_space",text= "Color Space")

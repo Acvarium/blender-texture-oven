@@ -12,6 +12,7 @@ import time
 import subprocess
 from bpy_extras.node_shader_utils import PrincipledBSDFWrapper
 
+
 from . bt_autopack import *
 
 # Helper para propriedades do objeto na lista
@@ -177,32 +178,39 @@ def CreateImageAtlas(activeJob,currentObject,jobPass):
         if image.name == activeJob.name + "_" + jobPass.name:
             hasit = True
             tempImage = image
-
+    y_size = x_size = int(jobPass.size)
+    if not jobPass.square_render:
+        y_size = jobPass.y_size
     if not hasit:
-        tempImage = bpy.data.images.new(name = activeJob.name + "_" + jobPass.name, width = int(jobPass.size), height= int(jobPass.size),alpha=True,float_buffer=True)
+        tempImage = bpy.data.images.new(name = activeJob.name + "_" + jobPass.name, width = x_size, height = y_size,alpha=True,float_buffer=True)
 
     tempImage.source = "GENERATED"
     tempImage.use_generated_float = True;
-    tempImage.generated_width = int(jobPass.size)
-    tempImage.generated_height = int(jobPass.size)
+    tempImage.generated_width = x_size
+    tempImage.generated_height = y_size
 
     return tempImage
+
 
 def CreateImage(activeJob,currentObject,jobPass,isAtlas):
     # Cria nova imagem com o nome do Objeto + Passo se não houver
     hasit = False
     tempImage = None
 
-    size = int(jobPass.size)
-
     print("---------------------------- ALIASING")
     print(jobPass.aliasing)
 
+    y_size = x_size = int(jobPass.size)
+    if not jobPass.square_render:
+        y_size = int(jobPass.y_size)
+
     if(jobPass.aliasing == "2x"):
-        size *= 2
+        x_size *= 2
+        y_size *= 2
 
     if(jobPass.aliasing == "4x"):
-        size *= 4
+        x_size *= 4
+        y_size *= 4
 
     if(isAtlas):
         name = activeJob.name + "_" + jobPass.name
@@ -216,15 +224,15 @@ def CreateImage(activeJob,currentObject,jobPass,isAtlas):
 
     if not hasit:
         if isAtlas:
-            tempImage = bpy.data.images.new(name = name, width = size, height= size, alpha=True, float_buffer=True)
+            tempImage = bpy.data.images.new(name = name, width = x_size, height= y_size, alpha=True, float_buffer=True)
         else:
-            tempImage = bpy.data.images.new(name = name, width = size, height= size, alpha=True, float_buffer=True)
+            tempImage = bpy.data.images.new(name = name, width = x_size, height= y_size, alpha=True, float_buffer=True)
 
     tempImage.source = "GENERATED"
 
     tempImage.use_generated_float = True;
-    tempImage.generated_width = int(size)
-    tempImage.generated_height = int(size)
+    tempImage.generated_width = int(x_size)
+    tempImage.generated_height = int(y_size)
 
     # Configure ColorSpace
     tempImage.colorspace_settings.name = jobPass.colors_space
@@ -279,14 +287,19 @@ def SaveImage(activeJob,currentObject,jobPass,tempImage,isAtlas):
         path = bpy.path.abspath(settings.path) + name + path_format
         tempImage.save_render(path)
 
+        y_size = x_size = int(jobPass.size)
+        if not jobPass.square_render:
+            y_size = int(jobPass.y_size)
+
         #Apply AA
         if(jobPass.aliasing != "None"):
-            imgSize = int(jobPass.size)
-            img = imbuf.load(path)
-            img.resize((int(imgSize), int(imgSize)))
-            imbuf.write(img,path)
-
+            img = bpy.data.images.load(path)
+            img.scale(x_size, y_size)
+            img.filepath_raw = path
+            img.file_format = 'PNG'  # або інший формат, якщо потрібно
+            img.save()
         return path
+
 
 def CheckBake(context,jobList):
 
@@ -424,6 +437,7 @@ def CheckBake(context,jobList):
     print ("--------------------- STATUS CHECK -----------------")
 
     return True
+
 
 def MakeUVs(context,jobList):
     # UV Unwrapper Systemm
