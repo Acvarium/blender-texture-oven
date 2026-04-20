@@ -3,7 +3,6 @@
 
 import bpy
 import blf
-import bgl
 import imbuf
 import os, sys
 import json
