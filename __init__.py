@@ -42,7 +42,7 @@ else:
     from . import (bt_cyclesbake)
 
 import bpy
-import random
+import uuid
 import os
 
 # TEXTURE OVEN OPERATORS ----------------------------------------------------------------------------------------
@@ -227,7 +227,7 @@ class TextureOven_BakePass(bpy.types.PropertyGroup):
                                 ("4096","4096","",7),
                                 ("8192","8192","",8)]
 
-    color_space_type = [        ("Linear","Linear","",1),
+    color_space_type = [        ("Linear Rec.709","Linear Rec.709","",1),
                                 ("sRGB","sRGB","",2),
                                 ("Non-Color","Non-Color","",3)]
 
@@ -499,7 +499,7 @@ def DuplicateJob(context,id):
         return
     ActiveJob = Job.Jobs[Job.index]
     Bake_Pass = bpy.context.scene.TextureOven_Jobs.Jobs.add()
-    Bake_Pass.id = random.randint(0, 9999)
+    Bake_Pass.id = uuid.uuid4().int & 0x7FFFFFFF
     Bake_Pass.name = "Job_" + str(len(bpy.context.scene.TextureOven_Jobs.Jobs))
     Bake_Pass.job_settings.mode = ActiveJob.job_settings.mode
     Bake_Pass.job_settings.profile_type = ActiveJob.job_settings.profile_type
@@ -525,7 +525,7 @@ def DuplicateJob(context,id):
         new_item.name = item.name
     for active_pass in ActiveJob.job_pass.Pass:
         new_pass = Bake_Pass.job_pass.Pass.add()
-        new_pass.id = random.randint(0, 9999)
+        new_pass.id = uuid.uuid4().int & 0x7FFFFFFF
         new_pass.name = active_pass.name
         new_pass.colors_space = active_pass.colors_space
         new_pass.type_simple = active_pass.type_simple
@@ -553,7 +553,7 @@ def DuplicateJob(context,id):
 
 def AddJob():
     Bake_Pass = bpy.context.scene.TextureOven_Jobs.Jobs.add()
-    Bake_Pass.id = random.randint(0, 9999)
+    Bake_Pass.id = uuid.uuid4().int & 0x7FFFFFFF
     Bake_Pass.name = "Job_" + str(len(bpy.context.scene.TextureOven_Jobs.Jobs))
 
 def RemoveJob(context,id):
@@ -599,7 +599,7 @@ def AddPass():
     Job = bpy.context.scene.TextureOven_Jobs
     ActiveJob = Job.Jobs[Job.index]
     Bake_Pass = ActiveJob.job_pass.Pass.add()
-    Bake_Pass.id = random.randint(0, 9999)
+    Bake_Pass.id = uuid.uuid4().int & 0x7FFFFFFF
     Bake_Pass.enabled = True
     Bake_Pass.name = "Pass_" + str(len(ActiveJob.job_pass.Pass))
 
@@ -687,6 +687,7 @@ class TEXTUREOVEN_PT_UV(bpy.types.Panel):
             return True
         else:
             return False
+
 
     def draw(self,context):
 
@@ -814,8 +815,8 @@ class TEXTUREOVEN_PT_PassList(bpy.types.Panel):
         if Pass.square_render:
             row.prop(Pass,"size",text="Resolution")
         else:
-            row.prop(Pass,"size",text="H Resolution")
-            row.prop(Pass,"y_size",text="V Resolution")
+            row.prop(Pass,"y_size",text="H Resolution")
+            row.prop(Pass,"size",text="V Resolution")
 
         row.prop(Pass,"aliasing",text="AA")
         row.prop(Pass,"margin",text="Margin")
