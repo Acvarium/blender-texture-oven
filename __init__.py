@@ -21,7 +21,7 @@
 bl_info = {
     "name": "TextureOven",
     "author": "Cogumelo Softworks, Vitalii Shmorhun",
-    "version": (2,7,0),
+    "version": (2,7,1),
     "blender": (4,1,0),
     "location": "3DView > Render> TextureOven",
     "description": "Bake Organizer for Cycles",
@@ -108,7 +108,8 @@ class TextureOven_SwitchEevee(bpy.types.Operator):
     def execute(self, context):
         # The original script
         blender_version = bpy.app.version
-        if blender_version[0] >= 4 and blender_version[1] > 1:
+        if (blender_version[0] >= 4 and blender_version[1] > 1) and \
+                ((blender_version[0] * 10 + blender_version[1]) < 52):
             context.scene.render.engine = 'BLENDER_EEVEE_NEXT'
         else:
             context.scene.render.engine = 'BLENDER_EEVEE'
