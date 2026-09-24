@@ -21,7 +21,7 @@
 bl_info = {
     "name": "TextureOven",
     "author": "Cogumelo Softworks, Vitalii Shmorhun",
-    "version": (2,7,1),
+    "version": (2,7,2),
     "blender": (4,1,0),
     "location": "3DView > Render> TextureOven",
     "description": "Bake Organizer for Cycles",
