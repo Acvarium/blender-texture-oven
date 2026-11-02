@@ -157,8 +157,7 @@ class TextureOven_Settings(bpy.types.PropertyGroup):
 
     mode : bpy.props.EnumProperty(name = "Bake Mode",  description = "Atlas = Bake all Objects to one texture group, Individual = Bake all objects as individual", default= "INDI", items = mode_enum)
 
-    path : bpy.props.StringProperty(default="//",subtype="DIR_PATH", description = "Save images in this location")
-    #keep : bpy.props.BoolProperty(default=True, description = "Save images inside Blender too")
+    path : bpy.props.StringProperty(default="//",subtype="DIR_PATH", options={'PATH_SUPPORTS_BLEND_RELATIVE'},  description = "Save images in this location")
     target : bpy.props.StringProperty(description = "if Target is filled it will bake all passes and objects for the target selected")
     target_uv : bpy.props.StringProperty()
     cage : bpy.props.StringProperty(description = "Cast Rays to target object from a Cage")
@@ -1090,9 +1089,7 @@ class TEXTUREOVEN_PT_Panel(bpy.types.Panel):
             layout.prop(ActiveJob.job_settings,"profile_type", text="Profile Setup",toggle = True, icon = "LIGHT",expand=True)
 
             layout.prop(ActiveJob.job_settings, "path", text = "Save Path")
-
-            if ActiveJob.job_settings.path != "":
-                layout.prop(ActiveJob.job_settings,"format")
+            layout.prop(ActiveJob.job_settings,"format")
 
             userpref = bpy.context.preferences
             if(not userpref.addons['cycles'].preferences.compute_device_type == "NONE"):

@@ -247,58 +247,59 @@ def SaveImage(activeJob,currentObject,jobPass,tempImage,isAtlas):
     else:
         name = activeJob.name + "_" + currentObject.name + "_" + jobPass.name
 
-    if settings.path != "":
-        cacheType = bpy.context.scene.render.image_settings.file_format
-        cacheColorMode = bpy.context.scene.render.image_settings.color_mode
-        cacheColorDept = bpy.context.scene.render.image_settings.color_depth
-        cacheCompression = bpy.context.scene.render.image_settings.compression
-        cacheQuality = bpy.context.scene.render.image_settings.quality
+    if settings.path == "":
+        settings.path = "//"
+    cacheType = bpy.context.scene.render.image_settings.file_format
+    cacheColorMode = bpy.context.scene.render.image_settings.color_mode
+    cacheColorDept = bpy.context.scene.render.image_settings.color_depth
+    cacheCompression = bpy.context.scene.render.image_settings.compression
+    cacheQuality = bpy.context.scene.render.image_settings.quality
 
-        bpy.context.scene.render.image_settings.file_format = settings.format
+    bpy.context.scene.render.image_settings.file_format = settings.format
 
+    try:
+        bpy.context.scene.render.image_settings.color_mode = "RGBA"
+    except:
+        bpy.context.scene.render.image_settings.color_mode = "RGB"
+
+    try:
+        bpy.context.scene.render.image_settings.color_depth = "32"
+    except:
         try:
-            bpy.context.scene.render.image_settings.color_mode = "RGBA"
+            bpy.context.scene.render.image_settings.color_depth = "16"
         except:
-            bpy.context.scene.render.image_settings.color_mode = "RGB"
+            bpy.context.scene.render.image_settings.color_depth = "8"
 
-        try:
-            bpy.context.scene.render.image_settings.color_depth = "32"
-        except:
-            try:
-                bpy.context.scene.render.image_settings.color_depth = "16"
-            except:
-                bpy.context.scene.render.image_settings.color_depth = "8"
+    path_format = ""
+    if settings.format == "JPEG":
+        path_format = ".jpeg"
+    if settings.format == "PNG":
+        path_format = ".png"
+    if settings.format == "TIFF":
+        path_format = ".tiff"
+    if settings.format == "OPEN_EXR":
+        path_format = ".exr"
+    if settings.format == "TARGA":
+        path_format = ".tga"
 
-        path_format = ""
-        if settings.format == "JPEG":
-            path_format = ".jpeg"
-        if settings.format == "PNG":
-            path_format = ".png"
-        if settings.format == "TIFF":
-            path_format = ".tiff"
-        if settings.format == "OPEN_EXR":
-            path_format = ".exr"
-        if settings.format == "TARGA":
-            path_format = ".tga"
+    bpy.context.scene.render.image_settings.compression = 100
+    bpy.context.scene.render.image_settings.quality = 100
 
-        bpy.context.scene.render.image_settings.compression = 100
-        bpy.context.scene.render.image_settings.quality = 100
+    path = bpy.path.abspath(settings.path) + name + path_format
+    tempImage.save_render(path)
 
-        path = bpy.path.abspath(settings.path) + name + path_format
-        tempImage.save_render(path)
+    y_size = x_size = int(jobPass.size)
+    if not jobPass.square_render:
+        y_size = int(jobPass.y_size)
 
-        y_size = x_size = int(jobPass.size)
-        if not jobPass.square_render:
-            y_size = int(jobPass.y_size)
-
-        #Apply AA
-        if(jobPass.aliasing != "None"):
-            img = bpy.data.images.load(path)
-            img.scale(x_size, y_size)
-            img.filepath_raw = path
-            img.file_format = 'PNG'  # або інший формат, якщо потрібно
-            img.save()
-        return path
+    #Apply AA
+    if(jobPass.aliasing != "None"):
+        img = bpy.data.images.load(path)
+        img.scale(x_size, y_size)
+        img.filepath_raw = path
+        img.file_format = 'PNG'  # або інший формат, якщо потрібно
+        img.save()
+    return path
 
 
 def CheckBake(context,jobList):
@@ -336,9 +337,10 @@ def CheckBake(context,jobList):
             return status
 
         # Verifica se existe um path válido para salvar as imagens
-        if(not os.path.exists(bpy.path.abspath(activeJob.job_settings.path))):
-            status = 'ABORTED: on the job: "' + activeJob.name + '". save path do not exist'
-            return status
+        if activeJob.job_settings.path != "":
+            if (not os.path.exists(bpy.path.abspath(activeJob.job_settings.path))):
+                status = 'ABORTED: on the job: "' + activeJob.name + '". save path do not exist'
+                return status
 
         # Verifica se existem  objetos na lista e se todos os objetos da lista estão visíveis
         checkstatus, objError = CheckVisible(objectList)
