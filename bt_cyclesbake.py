@@ -59,7 +59,6 @@ def Cycles_DoAtlasBake(activeJob):
         settings = activeJob.job_settings
         listObjects = GetObjectListJob(activeJob,settings,True)
         listObjectsFrom = GetObjectListJob(activeJob,settings,False)
-      
 
         passList = GetActivePasses(activeJob)
 
@@ -81,87 +80,87 @@ def Cycles_DoAtlasBake(activeJob):
             JobReport["passCurrent"] = str(idx_pass + 1)
             SaveBakeReport(reports)
 
-            #keepMaterials = []
             keepMaterialOutput = []
             AlreadyHandledMaterials = []
 
             #Setup materials for object, that will be baked from
-            for idx_obj,obj in  enumerate(listObjectsFrom):
-                currentObject = obj[0]
-                for mat in currentObject.data.materials:
+            tempImage = None
+            currentObject = None
 
-                    if(mat in AlreadyHandledMaterials):
-                        SetTextureOvenUV(obj)
-                        continue
+            if settings.target == "":
+                if len(listObjectsFrom) > 0:
+                    currentObject = listObjectsFrom[0][0]
+                    tempImage = CreateImage(activeJob, currentObject, jobPass, True)
 
-                    print("FIXING MAT----------------------------------")
-                    print(mat)
-
-                    AlreadyHandledMaterials.append(mat)
-                    node_tree = mat.node_tree
-                    for node in node_tree.nodes:
-                        node.select = False
-
-                    FixUVNodes(mat,obj)
-
-                    keepMaterialOutput.append([node_tree,SetCustomMaterial(currentObject,mat,jobPass,settings)])
-
-                    SetTextureOvenUV(obj)
-
-
-            # Para Cada Objeto
-            for idx_obj,obj in enumerate(listObjects):
-
-                reports = LoadBakeReports()
-                jobList = reports["jobs"]
-
-                JobReport = None
-                for Job in jobList:
-                    if(Job["name"] == activeJob.name):
-                        JobReport = Job
-
-                JobReport["objCurrent"] = str(len(listObjects))
-                JobReport["objCount"] = str(len(listObjects))
-
+                JobReport["objCurrent"] = str(len(listObjectsFrom))
+                JobReport["objCount"] = str(len(listObjectsFrom))
                 SaveBakeReport(reports)
 
-                currentObject = obj[0]
-                tempImage = CreateImage(activeJob,currentObject,jobPass,True)
+                for idx_obj,obj in enumerate(listObjectsFrom):
+                    currObj = obj[0]
+                    for mat in currObj.data.materials:
 
-                #keepMaterials.append(ApplyExternalMaterial(currentObject,jobPass.type_simple));
+                        if(mat in AlreadyHandledMaterials):
+                            SetTextureOvenUV(obj)
+                            continue
 
-                # Para cada Material
-                for mat in currentObject.data.materials:
+                        print("FIXING MAT----------------------------------")
+                        print(mat)
 
-                    if(mat in AlreadyHandledMaterials):
+                        AlreadyHandledMaterials.append(mat)
+                        node_tree = mat.node_tree
+                        for node in node_tree.nodes:
+                            node.select = False
+
+                        FixUVNodes(mat,obj)
+
+                        keepMaterialOutput.append([node_tree,SetCustomMaterial(currObj,mat,jobPass,settings)])
+
+                        image_node = node_tree.nodes.new('ShaderNodeTexImage')
+                        image_node.location = (100,100)
+                        image_node.image = tempImage
+                        image_node.select = True
+                        mat.node_tree.nodes.active = image_node
+
                         SetTextureOvenUV(obj)
-                        continue
+            else:
+                tempListObj = listObjects
+                for idx_obj,obj in enumerate(tempListObj):
 
-                    print("FIXING MAT----------------------------------")
-                    print(mat)
+                    JobReport["objCurrent"] = str(len(tempListObj))
+                    JobReport["objCount"] = str(len(tempListObj))
 
-                    AlreadyHandledMaterials.append(mat)
+                    SaveBakeReport(reports)
 
-                    # Desseleciona Todos os Nodes
-                    node_tree = mat.node_tree
-                    for node in node_tree.nodes:
-                        node.select = False
+                    currentObject = obj[0]
+                    tempImage = CreateImage(activeJob,currentObject,jobPass,True)
 
-                    FixUVNodes(mat,obj)
+                    for mat in currentObject.data.materials:
 
-                    keepMaterialOutput.append([node_tree,SetCustomMaterial(currentObject,mat,jobPass,settings)]);
+                        if(mat in AlreadyHandledMaterials):
+                            SetTextureOvenUV(obj)
+                            continue
 
-                    # Cria Image Nodes
-                    image_node = node_tree.nodes.new('ShaderNodeTexImage')
-                    image_node.location = (100,100)
-                    image_node.image = tempImage
-                    image_node.select = True
-                    image_node.update()
+                        print("FIXING MAT----------------------------------")
+                        print(mat)
 
-                    # Torna Imagem Ativa
-                    mat.node_tree.nodes.active = image_node
+                        AlreadyHandledMaterials.append(mat)
 
-                    SetTextureOvenUV(obj)
+                        node_tree = mat.node_tree
+                        for node in node_tree.nodes:
+                            node.select = False
+
+                        FixUVNodes(mat,obj)
+
+                        keepMaterialOutput.append([node_tree,SetCustomMaterial(currentObject,mat,jobPass,settings)]);
+
+                        image_node = node_tree.nodes.new('ShaderNodeTexImage')
+                        image_node.location = (100,100)
+                        image_node.image = tempImage
+                        image_node.select = True
+                        mat.node_tree.nodes.active = image_node
+
+                        SetTextureOvenUV(obj)
 
             #Configura o Render Settings
             SetRenderSettings(jobPass,settings)
@@ -189,11 +188,11 @@ def Cycles_DoAtlasBake(activeJob):
                     bpy.context.view_layer.objects.active = obj[0]
 
             else:
-                # Desseleciona todos os objetos da cena e seleciona Apenas os Objetos da Lista
                 bpy.ops.object.select_all(action="DESELECT")
-                for obj in listObjects:
+                for idx,obj in enumerate(listObjectsFrom):
                     obj[0].select_set(True)
-                    bpy.context.view_layer.objects.active = obj[0]
+                    if idx == 0:
+                        bpy.context.view_layer.objects.active = obj[0]
 
             # BAKE
             if(settings.profile_type == "TEXTUREOVEN"):

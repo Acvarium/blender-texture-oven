@@ -109,13 +109,14 @@ def CheckForNoMaterial(ListObj):
 def GetObjectListJob(activeJob,settings,isAtlas):
 
     listObjects = []
+    if isAtlas and settings.target == "":
+        return []
     if settings.target != "" and isAtlas == True:
         # A lista é preenchida com os dados do Target
         target = bpy.context.scene.objects[settings.target]
         targetProps = TargetGroup(settings.target,settings.target_uv)
         listObjects.append((target,targetProps))
     else:
-
         for obj_name in activeJob.job_objs.coll:
             for obj in bpy.context.scene.objects:
                 if obj_name.name == obj.name:
@@ -312,19 +313,20 @@ def CheckBake(context,jobList):
             continue
 
         if activeJob.job_settings.mode == "ATLAS":
-            if activeJob.job_settings.target == "":
-                status = 'ABORTED: on the job: "' + activeJob.name + '". No target object assigned'
-                return status
-            if not activeJob.job_settings.target in bpy.data.objects.keys():
-                status = 'ABORTED: on the job: "' + activeJob.name + '". Target object does not exist'
-                return status
-            target_obj = bpy.context.scene.objects[activeJob.job_settings.target]
-            if target_obj not in bpy.context.visible_objects:
-                status = 'ABORTED: on the job: "' + activeJob.name + '". Target object is not visible'
-                return status
-            if not IsObjRenderVisible(target_obj):
-                status = 'ABORTED: on the job: "' + activeJob.name + '". Target object is not visible in render'
-                return status
+            # if activeJob.job_settings.target == "":
+            #     status = 'ABORTED: on the job: "' + activeJob.name + '". No target object assigned'
+            #     return status
+            # if not activeJob.job_settings.target in bpy.data.objects.keys():
+            #     status = 'ABORTED: on the job: "' + activeJob.name + '". Target object does not exist'
+            #     return status
+            if activeJob.job_settings.target != "" and activeJob.job_settings.target in bpy.data.objects.keys():
+                target_obj = bpy.context.scene.objects[activeJob.job_settings.target]
+                if target_obj not in bpy.context.visible_objects:
+                    status = 'ABORTED: on the job: "' + activeJob.name + '". Target object is not visible'
+                    return status
+                if not IsObjRenderVisible(target_obj):
+                    status = 'ABORTED: on the job: "' + activeJob.name + '". Target object is not visible in render'
+                    return status
 
 
         objectList = activeJob.job_objs.coll
